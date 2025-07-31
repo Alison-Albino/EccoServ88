@@ -2,10 +2,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Navbar } from "@/components/navbar";
 import { StatsCard } from "@/components/stats-card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, DollarSign, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { type VisitWithDetails, type WellWithClient } from "@shared/schema";
+import { type VisitWithDetails, type WellWithClient, type InvoiceWithDetails } from "@shared/schema";
 import { format } from "date-fns";
+import { InvoiceList } from "@/components/invoice-list";
 
 interface AdminStats {
   totalClients: number;
@@ -27,6 +29,10 @@ export default function AdminDashboard() {
 
   const { data: wells } = useQuery<{ wells: WellWithClient[] }>({
     queryKey: ['/api/admin/wells'],
+  });
+
+  const { data: invoices } = useQuery<{ invoices: InvoiceWithDetails[] }>({
+    queryKey: ['/api/invoices'],
   });
 
   const getStatusBadge = (status: string) => {
@@ -80,11 +86,24 @@ export default function AdminDashboard() {
     },
   ];
 
+  const totalInvoices = invoices?.invoices.length || 0;
+  const paidInvoices = invoices?.invoices.filter(inv => inv.status === 'paid').length || 0;
+  const pendingInvoices = invoices?.invoices.filter(inv => inv.status === 'sent' || inv.status === 'overdue').length || 0;
+  const totalRevenue = invoices?.invoices
+    .filter(inv => inv.status === 'paid')
+    .reduce((sum, inv) => sum + parseFloat(inv.totalAmount), 0) || 0;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
+          <p className="text-gray-600 mt-2">Bem-vindo, {user?.name}! Visão geral do sistema EccoServ.</p>
+        </div>
+
         {/* Admin Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <StatsCard
@@ -106,14 +125,23 @@ export default function AdminDashboard() {
             variant="warning"
           />
           <StatsCard
-            title="Visitas Mês"
-            value={stats?.monthlyVisits || 0}
-            icon={CalendarCheck}
+            title="Receita Total"
+            value={`R$ ${totalRevenue.toFixed(2).replace('.', ',')}`}
+            icon={DollarSign}
             variant="error"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="wells">Poços</TabsTrigger>
+            <TabsTrigger value="visits">Visitas</TabsTrigger>
+            <TabsTrigger value="invoices">Faturas</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Activity */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
@@ -187,7 +215,164 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="wells">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Gerenciamento de Poços</h2>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid gap-4">
+                  {wells?.wells.map((well) => {
+                    const lastVisit = visits?.visits
+                      .filter(v => v.wellId === well.id)
+                      .sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime())[0];
+
+                    return (
+                      <div key={well.id} className="border border-gray-200 rounded-lg p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-lg">{well.name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Cliente: {well.client.user.name} • Localização: {well.location}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Tipo: {well.wellType} • Profundidade: {well.depth}m
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            {getStatusBadge(well.status)}
+                          </div>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600">
+                          <p><strong>Última Manutenção:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy') : 'Nunca'}</p>
+                          {well.lastMaintenanceDate && (
+                            <p><strong>Próxima Manutenção:</strong> {format(new Date(well.lastMaintenanceDate), 'dd/MM/yyyy')}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {(!wells?.wells || wells.wells.length === 0) && (
+                    <div className="text-center py-12">
+                      <Droplet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhum poço cadastrado.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="visits">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Visitas Recentes</h2>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  {visits?.visits.slice(0, 10).map((visit) => (
+                    <div key={visit.id} className="border border-gray-200 rounded-lg p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 text-lg">
+                            {visit.well.name} - {visit.well.client.user.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • Prestador: {visit.provider.user.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Badge className={visit.status === 'completed' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}>
+                            {visit.status === 'completed' ? 'Concluída' : 'Em Andamento'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-gray-700">{visit.observations}</p>
+                    </div>
+                  ))}
+                  
+                  {(!visits?.visits || visits.visits.length === 0) && (
+                    <div className="text-center py-12">
+                      <CalendarCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhuma visita registrada.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="invoices">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{totalInvoices}</p>
+                      <p className="text-sm text-gray-600">Total de Faturas</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="h-8 w-8 text-success" />
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{paidInvoices}</p>
+                      <p className="text-sm text-gray-600">Faturas Pagas</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="h-8 w-8 text-warning" />
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{pendingInvoices}</p>
+                      <p className="text-sm text-gray-600">Faturas Pendentes</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-gray-900">Todas as Faturas</h2>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4 text-success" />
+                      <span>Receita Total: R$ {totalRevenue.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  {invoices?.invoices ? (
+                    <InvoiceList 
+                      invoices={invoices.invoices} 
+                      userType="admin"
+                      showActions={true}
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhuma fatura encontrada.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

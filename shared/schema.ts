@@ -51,6 +51,27 @@ export const visits = pgTable("visits", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const invoices = pgTable("invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitId: varchar("visit_id").references(() => visits.id).notNull(),
+  clientId: varchar("client_id").references(() => clients.id).notNull(),
+  providerId: varchar("provider_id").references(() => providers.id).notNull(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  description: text("description").notNull(),
+  serviceValue: text("service_value").notNull(), // '0.00' for free services
+  materialCosts: text("material_costs").default('0.00'),
+  totalAmount: text("total_amount").notNull(),
+  isFree: boolean("is_free").default(false),
+  status: text("status").notNull().default('pending'), // 'pending', 'sent', 'paid', 'overdue', 'cancelled'
+  dueDate: timestamp("due_date").notNull(),
+  paidDate: timestamp("paid_date"),
+  paymentMethod: text("payment_method"), // 'boleto', 'pix', 'card', 'cash'
+  paymentUrl: text("payment_url"), // External payment link
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  sentAt: timestamp("sent_at"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -77,11 +98,29 @@ export const insertVisitSchema = createInsertSchema(visits).omit({
   createdAt: true,
 });
 
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  sentAt: true,
+});
+
 // Login schema
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   userType: z.enum(['client', 'provider', 'admin']),
+});
+
+// Invoice creation schema with validation
+export const createInvoiceSchema = z.object({
+  visitId: z.string(),
+  description: z.string().min(1),
+  serviceValue: z.string().regex(/^\d+\.\d{2}$/),
+  materialCosts: z.string().regex(/^\d+\.\d{2}$/).optional().default('0.00'),
+  isFree: z.boolean().default(false),
+  dueDate: z.string().or(z.date()),
+  paymentMethod: z.enum(['boleto', 'pix', 'card', 'cash']).optional(),
+  notes: z.string().optional(),
 });
 
 // Types
@@ -95,7 +134,10 @@ export type InsertProvider = z.infer<typeof insertProviderSchema>;
 export type Provider = typeof providers.$inferSelect;
 export type InsertVisit = z.infer<typeof insertVisitSchema>;
 export type Visit = typeof visits.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
 export type LoginRequest = z.infer<typeof loginSchema>;
+export type CreateInvoiceRequest = z.infer<typeof createInvoiceSchema>;
 
 // Extended types for API responses
 export type UserWithProfile = User & {
@@ -109,5 +151,11 @@ export type WellWithClient = Well & {
 
 export type VisitWithDetails = Visit & {
   well: WellWithClient;
+  provider: Provider & { user: User };
+};
+
+export type InvoiceWithDetails = Invoice & {
+  visit: VisitWithDetails;
+  client: Client & { user: User };
   provider: Provider & { user: User };
 };

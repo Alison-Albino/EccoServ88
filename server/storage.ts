@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Client, type InsertClient, type Well, type InsertWell, type Provider, type InsertProvider, type Visit, type InsertVisit, type UserWithProfile, type WellWithClient, type VisitWithDetails } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type Well, type InsertWell, type Provider, type InsertProvider, type Visit, type InsertVisit, type Invoice, type InsertInvoice, type UserWithProfile, type WellWithClient, type VisitWithDetails, type InvoiceWithDetails } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -35,6 +35,16 @@ export interface IStorage {
   getVisitsWithDetails(): Promise<VisitWithDetails[]>;
   getVisitsByClientId(clientId: string): Promise<VisitWithDetails[]>;
   updateVisitStatus(id: string, status: string): Promise<void>;
+
+  // Invoice operations
+  getInvoice(id: string): Promise<Invoice | undefined>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  getInvoicesByClientId(clientId: string): Promise<InvoiceWithDetails[]>;
+  getInvoicesByProviderId(providerId: string): Promise<InvoiceWithDetails[]>;
+  getInvoicesWithDetails(): Promise<InvoiceWithDetails[]>;
+  updateInvoiceStatus(id: string, status: string): Promise<void>;
+  markInvoiceAsSent(id: string): Promise<void>;
+  markInvoiceAsPaid(id: string, paymentMethod: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -43,6 +53,7 @@ export class MemStorage implements IStorage {
   private wells: Map<string, Well>;
   private providers: Map<string, Provider>;
   private visits: Map<string, Visit>;
+  private invoices: Map<string, Invoice>;
 
   constructor() {
     this.users = new Map();
@@ -50,6 +61,7 @@ export class MemStorage implements IStorage {
     this.wells = new Map();
     this.providers = new Map();
     this.visits = new Map();
+    this.invoices = new Map();
     this.initializeSampleData();
   }
 
@@ -223,6 +235,74 @@ export class MemStorage implements IStorage {
     this.visits.set(visit1.id, visit1);
     this.visits.set(visit2.id, visit2);
     this.visits.set(visit3.id, visit3);
+
+    // Create sample invoices
+    const invoice1: Invoice = {
+      id: 'invoice-1',
+      visitId: 'visit-1',
+      clientId: 'client-profile-1',
+      providerId: 'provider-profile-1',
+      invoiceNumber: 'FAT-2024-001',
+      description: 'Manutenção preventiva completa - Poço 01 Residencial',
+      serviceValue: '150.00',
+      materialCosts: '25.00',
+      totalAmount: '175.00',
+      isFree: false,
+      status: 'paid',
+      dueDate: new Date('2024-03-15'),
+      paidDate: new Date('2024-03-10'),
+      paymentMethod: 'boleto',
+      paymentUrl: 'https://exemplo.com/boleto/123456',
+      notes: 'Pagamento realizado via boleto bancário',
+      createdAt: new Date('2024-03-01'),
+      sentAt: new Date('2024-03-01')
+    };
+    
+    const invoice2: Invoice = {
+      id: 'invoice-2',
+      visitId: 'visit-2',
+      clientId: 'client-profile-1',
+      providerId: 'provider-profile-2',
+      invoiceNumber: 'FAT-2024-002',
+      description: 'Reparo da bomba submersível - Poço 02 Industrial',
+      serviceValue: '300.00',
+      materialCosts: '120.00',
+      totalAmount: '420.00',
+      isFree: false,
+      status: 'sent',
+      dueDate: new Date('2024-04-01'),
+      paidDate: null,
+      paymentMethod: null,
+      paymentUrl: 'https://exemplo.com/boleto/789012',
+      notes: 'Aguardando pagamento - vencimento em 01/04/2024',
+      createdAt: new Date('2024-03-15'),
+      sentAt: new Date('2024-03-16')
+    };
+    
+    const invoice3: Invoice = {
+      id: 'invoice-3',
+      visitId: 'visit-3',
+      clientId: 'client-profile-2',
+      providerId: 'provider-profile-1',
+      invoiceNumber: 'FAT-2024-003',
+      description: 'Inspeção preventiva - Poço Principal Agrícola',
+      serviceValue: '0.00',
+      materialCosts: '0.00',
+      totalAmount: '0.00',
+      isFree: true,
+      status: 'pending',
+      dueDate: new Date('2024-04-05'),
+      paidDate: null,
+      paymentMethod: null,
+      paymentUrl: null,
+      notes: 'Serviço gratuito de inspeção de rotina',
+      createdAt: new Date('2024-03-20'),
+      sentAt: null
+    };
+
+    this.invoices.set(invoice1.id, invoice1);
+    this.invoices.set(invoice2.id, invoice2);
+    this.invoices.set(invoice3.id, invoice3);
   }
 
   // User operations
@@ -442,6 +522,100 @@ export class MemStorage implements IStorage {
     const visit = this.visits.get(id);
     if (visit) {
       this.visits.set(id, { ...visit, status });
+    }
+  }
+
+  // Invoice operations
+  async getInvoice(id: string): Promise<Invoice | undefined> {
+    return this.invoices.get(id);
+  }
+
+  async createInvoice(insertInvoice: InsertInvoice): Promise<Invoice> {
+    const id = randomUUID();
+    const invoiceNumber = `FAT-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    
+    const invoice: Invoice = { 
+      ...insertInvoice,
+      id,
+      invoiceNumber,
+      createdAt: new Date(),
+      sentAt: null,
+      paidDate: insertInvoice.paidDate ?? null,
+      paymentMethod: insertInvoice.paymentMethod ?? null,
+      paymentUrl: insertInvoice.paymentUrl ?? null,
+      notes: insertInvoice.notes ?? null
+    };
+    this.invoices.set(id, invoice);
+    return invoice;
+  }
+
+  async getInvoicesByClientId(clientId: string): Promise<InvoiceWithDetails[]> {
+    const allInvoices = await this.getInvoicesWithDetails();
+    return allInvoices.filter(invoice => invoice.clientId === clientId);
+  }
+
+  async getInvoicesByProviderId(providerId: string): Promise<InvoiceWithDetails[]> {
+    const allInvoices = await this.getInvoicesWithDetails();
+    return allInvoices.filter(invoice => invoice.providerId === providerId);
+  }
+
+  async getInvoicesWithDetails(): Promise<InvoiceWithDetails[]> {
+    const invoices = Array.from(this.invoices.values());
+    const result = [];
+    
+    for (const invoice of invoices) {
+      const visit = await this.getVisit(invoice.visitId);
+      const client = await this.getClient(invoice.clientId);
+      const provider = await this.getProvider(invoice.providerId);
+      
+      if (visit && client && provider) {
+        const well = await this.getWell(visit.wellId);
+        const clientUser = await this.getUser(client.userId);
+        const providerUser = await this.getUser(provider.userId);
+        
+        if (well && clientUser && providerUser) {
+          const visitWithDetails: VisitWithDetails = {
+            ...visit,
+            well: { ...well, client: { ...client, user: clientUser } },
+            provider: { ...provider, user: providerUser }
+          };
+          
+          result.push({
+            ...invoice,
+            visit: visitWithDetails,
+            client: { ...client, user: clientUser },
+            provider: { ...provider, user: providerUser }
+          });
+        }
+      }
+    }
+    
+    return result.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+
+  async updateInvoiceStatus(id: string, status: string): Promise<void> {
+    const invoice = this.invoices.get(id);
+    if (invoice) {
+      this.invoices.set(id, { ...invoice, status });
+    }
+  }
+
+  async markInvoiceAsSent(id: string): Promise<void> {
+    const invoice = this.invoices.get(id);
+    if (invoice) {
+      this.invoices.set(id, { ...invoice, status: 'sent', sentAt: new Date() });
+    }
+  }
+
+  async markInvoiceAsPaid(id: string, paymentMethod: string): Promise<void> {
+    const invoice = this.invoices.get(id);
+    if (invoice) {
+      this.invoices.set(id, { 
+        ...invoice, 
+        status: 'paid', 
+        paidDate: new Date(),
+        paymentMethod 
+      });
     }
   }
 }

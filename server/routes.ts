@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, insertVisitSchema } from "@shared/schema";
+import { loginSchema, insertVisitSchema, createInvoiceSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
@@ -188,6 +188,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const wells = await storage.getWellsWithClient();
       res.json({ wells });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Invoice routes
+  app.post("/api/invoices", async (req, res) => {
+    try {
+      const invoiceData = createInvoiceSchema.parse(req.body);
+      
+      // Get visit details to populate client and provider
+      const visit = await storage.getVisit(invoiceData.visitId);
+      if (!visit) {
+        return res.status(404).json({ message: "Visit not found" });
+      }
+
+      const well = await storage.getWell(visit.wellId);
+      if (!well) {
+        return res.status(404).json({ message: "Well not found" });
+      }
+
+      // Calculate total amount
+      const serviceValue = parseFloat(invoiceData.serviceValue);
+      const materialCosts = parseFloat(invoiceData.materialCosts || '0.00');
+      const totalAmount = (serviceValue + materialCosts).toFixed(2);
+
+      const invoice = await storage.createInvoice({
+        visitId: invoiceData.visitId,
+        clientId: well.clientId,
+        providerId: visit.providerId,
+        description: invoiceData.description,
+        serviceValue: invoiceData.serviceValue,
+        materialCosts: invoiceData.materialCosts || '0.00',
+        totalAmount,
+        isFree: invoiceData.isFree || serviceValue === 0,
+        status: 'pending',
+        dueDate: new Date(invoiceData.dueDate),
+        paymentMethod: invoiceData.paymentMethod || null,
+        notes: invoiceData.notes || null,
+        paymentUrl: null,
+        paidDate: null
+      });
+
+      res.status(201).json({ invoice });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/invoices", async (req, res) => {
+    try {
+      const invoices = await storage.getInvoicesWithDetails();
+      res.json({ invoices });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/clients/:clientId/invoices", async (req, res) => {
+    try {
+      const invoices = await storage.getInvoicesByClientId(req.params.clientId);
+      res.json({ invoices });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/providers/:providerId/invoices", async (req, res) => {
+    try {
+      const invoices = await storage.getInvoicesByProviderId(req.params.providerId);
+      res.json({ invoices });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/invoices/:id/send", async (req, res) => {
+    try {
+      await storage.markInvoiceAsSent(req.params.id);
+      const invoice = await storage.getInvoice(req.params.id);
+      res.json({ invoice, message: "Invoice sent successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/invoices/:id/paid", async (req, res) => {
+    try {
+      const { paymentMethod } = req.body;
+      if (!paymentMethod) {
+        return res.status(400).json({ message: "Payment method is required" });
+      }
+      
+      await storage.markInvoiceAsPaid(req.params.id, paymentMethod);
+      const invoice = await storage.getInvoice(req.params.id);
+      res.json({ invoice, message: "Invoice marked as paid" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/invoices/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      await storage.updateInvoiceStatus(req.params.id, status);
+      const invoice = await storage.getInvoice(req.params.id);
+      res.json({ invoice, message: "Invoice status updated" });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

@@ -7,12 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CloudUpload, Wrench, Camera, Fan, Cog } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CloudUpload, Wrench, Camera, Fan, Cog, FileText, Plus, DollarSign } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type VisitWithDetails } from "@shared/schema";
+import { type VisitWithDetails, type InvoiceWithDetails } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
+import { InvoiceForm } from "@/components/invoice-form";
+import { InvoiceList } from "@/components/invoice-list";
 
 interface Client {
   id: string;
@@ -39,6 +43,8 @@ export default function ProviderDashboard() {
     observations: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
+  const [selectedVisitForInvoice, setSelectedVisitForInvoice] = useState<VisitWithDetails | null>(null);
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
 
   const { data: clients } = useQuery<{ clients: Client[] }>({
     queryKey: ['/api/clients'],
@@ -50,6 +56,11 @@ export default function ProviderDashboard() {
 
   const { data: visits, isLoading } = useQuery<{ visits: VisitWithDetails[] }>({
     queryKey: ['/api/providers', user?.provider?.id, 'visits'],
+    enabled: !!user?.provider?.id,
+  });
+
+  const { data: invoices } = useQuery<{ invoices: InvoiceWithDetails[] }>({
+    queryKey: ['/api/providers', user?.provider?.id, 'invoices'],
     enabled: !!user?.provider?.id,
   });
 
@@ -147,19 +158,37 @@ export default function ProviderDashboard() {
     !visitForm.clientId || well.clientId === visitForm.clientId
   ) || [];
 
+  const handleCreateInvoice = (visit: VisitWithDetails) => {
+    setSelectedVisitForInvoice(visit);
+    setIsInvoiceDialogOpen(true);
+  };
+
+  const handleInvoiceSuccess = () => {
+    setIsInvoiceDialogOpen(false);
+    setSelectedVisitForInvoice(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* New Visit Form */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Registrar Nova Visita</h2>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <Tabs defaultValue="visits" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
+            <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
+            <TabsTrigger value="invoices">Faturas</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="visits">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* New Visit Form */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">Registrar Nova Visita</h2>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="visitDate">Data da Visita *</Label>
@@ -351,7 +380,151 @@ export default function ProviderDashboard() {
               )}
             </div>
           </div>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="my-visits">
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">Todas as Minhas Visitas</h2>
+                </div>
+                
+                <div className="p-6">
+                  {isLoading ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {visits?.visits.map((visit) => (
+                        <div key={visit.id} className="border border-gray-200 rounded-lg p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-lg">
+                                {visit.well.client.user.name} - {visit.well.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • {visit.well.location}
+                              </p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                                <span className="flex items-center">
+                                  {getServiceIcon(visit.serviceType)}
+                                  <span className="ml-1">{getServiceTypeLabel(visit.serviceType)}</span>
+                                </span>
+                                <span className="flex items-center">
+                                  <Camera className="h-4 w-4 mr-1" />
+                                  {visit.photos?.length || 0} fotos
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {getStatusBadge(visit.status)}
+                              <Button
+                                size="sm"
+                                onClick={() => handleCreateInvoice(visit)}
+                                disabled={visit.hasInvoice}
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                {visit.hasInvoice ? 'Faturado' : 'Criar Fatura'}
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm text-gray-700 mb-3">{visit.observations}</p>
+                          
+                          {visit.photos && visit.photos.length > 0 && (
+                            <div className="flex space-x-2 mt-3">
+                              {visit.photos.slice(0, 3).map((photo, index) => (
+                                <img
+                                  key={index}
+                                  src={photo}
+                                  alt={`Foto ${index + 1}`}
+                                  className="w-16 h-16 object-cover rounded-lg border"
+                                />
+                              ))}
+                              {visit.photos.length > 3 && (
+                                <div className="w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">+{visit.photos.length - 3}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      
+                      {(!visits?.visits || visits.visits.length === 0) && (
+                        <div className="text-center py-12">
+                          <Wrench className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">Nenhuma visita registrada ainda.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="invoices">
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-gray-900">Minhas Faturas</h2>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4 text-success" />
+                      <span>Total Faturado: R$ {
+                        invoices?.invoices
+                          .filter(inv => inv.status === 'paid')
+                          .reduce((sum, inv) => sum + parseFloat(inv.totalAmount), 0)
+                          .toFixed(2)
+                          .replace('.', ',') || '0,00'
+                      }</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  {invoices?.invoices ? (
+                    <InvoiceList 
+                      invoices={invoices.invoices} 
+                      userType="provider"
+                      showActions={true}
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhuma fatura criada ainda.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Invoice Creation Dialog */}
+        <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Criar Fatura para Visita</DialogTitle>
+            </DialogHeader>
+            {selectedVisitForInvoice && (
+              <InvoiceForm
+                visit={selectedVisitForInvoice}
+                onSuccess={handleInvoiceSuccess}
+                onCancel={() => setIsInvoiceDialogOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

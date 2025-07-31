@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./storage-simple";
 import { loginSchema, insertVisitSchema, createInvoiceSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
+import { randomUUID } from "crypto";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -22,6 +23,34 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Registration
+  app.post('/api/register', async (req, res) => {
+    try {
+      const { name, email, password, userType } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Usuário já existe com este email' });
+      }
+
+      // Create user
+      const user = await storage.createUser({
+        id: randomUUID(),
+        name,
+        email,
+        password, // In production, hash the password
+        userType,
+        createdAt: new Date().toISOString()
+      });
+
+      res.json({ id: user.id, name: user.name, email: user.email, userType: user.userType });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   // Authentication
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -52,6 +81,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ user: userWithProfile });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create client profile
+  app.post("/api/clients", async (req, res) => {
+    try {
+      const { userId, address, phone } = req.body;
+      
+      const client = await storage.createClient({
+        id: randomUUID(),
+        userId,
+        address,
+        phone
+      });
+
+      res.status(201).json(client);
+    } catch (error) {
+      console.error('Create client error:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Create provider profile
+  app.post("/api/providers", async (req, res) => {
+    try {
+      const { userId, specialties, phone } = req.body;
+      
+      const provider = await storage.createProvider({
+        id: randomUUID(),
+        userId,
+        specialties,
+        phone
+      });
+
+      res.status(201).json(provider);
+    } catch (error) {
+      console.error('Create provider error:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
 

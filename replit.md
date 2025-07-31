@@ -27,10 +27,11 @@ Preferred communication style: Simple, everyday language.
 - **Development**: Hot reload with Vite integration in development mode
 
 ### Data Storage Solutions
-- **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
+- **Database**: PostgreSQL with Drizzle ORM ready for production deployment
 - **Schema Management**: Drizzle Kit for migrations and schema changes
-- **Connection**: Neon Database serverless driver for PostgreSQL connections
-- **Storage Strategy**: In-memory storage implementation for development/testing with interface for easy production database integration
+- **Connection**: DATABASE_URL environment variable configured for easy .env integration
+- **Storage Strategy**: In-memory storage with interface for seamless database migration (DatabaseStorage class available in server/storage.ts)
+- **Migration Ready**: `npm run db:push` command available for schema deployment
 
 ### Authentication and Authorization
 - **Strategy**: Simple email/password authentication with user type differentiation
@@ -44,6 +45,15 @@ Preferred communication style: Simple, everyday language.
 - **Wells**: Client-owned assets with location, type, and status tracking
 - **Providers**: Service technicians with specialties and contact information
 - **Visits**: Service appointments linking providers to wells with observations, photos, and status
+- **Invoices**: Financial records linking visits to billing information with status tracking
+
+### Application Pages
+- **Landing Page** (`/`): Modern homepage with user type selection and feature overview
+- **Registration Page** (`/register`): Multi-step registration for clients and providers with conditional fields
+- **Login Page** (`/login`): Authentication with role-based dashboard redirection
+- **Client Dashboard**: Well management, visit history, and invoice viewing
+- **Provider Dashboard**: Visit scheduling, invoice generation, and service tracking
+- **Admin Dashboard**: System overview with comprehensive reporting and user management
 
 ### External Dependencies
 - **Database**: Neon Database (PostgreSQL serverless)

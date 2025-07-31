@@ -4,7 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import IndexPage from "@/pages/index";
 import Login from "@/pages/login";
+import Register from "@/pages/register";
 import ClientDashboard from "@/pages/client-dashboard";
 import ProviderDashboard from "@/pages/provider-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -33,18 +35,34 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: Rea
 }
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  if (!user) {
-    return <Login />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
     <Switch>
       <Route path="/">
-        {user.userType === "client" && <ClientDashboard />}
-        {user.userType === "provider" && <ProviderDashboard />}
-        {user.userType === "admin" && <AdminDashboard />}
+        {!user ? <IndexPage /> : (
+          <>
+            {user.userType === "client" && <ClientDashboard />}
+            {user.userType === "provider" && <ProviderDashboard />}
+            {user.userType === "admin" && <AdminDashboard />}
+          </>
+        )}
+      </Route>
+      
+      <Route path="/login">
+        <Login />
+      </Route>
+      
+      <Route path="/register">
+        <Register />
       </Route>
       
       <Route path="/client">

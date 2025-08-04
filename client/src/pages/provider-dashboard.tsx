@@ -8,16 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CloudUpload, Wrench, Camera, Fan, Cog, FileText, Plus, DollarSign, FlaskConical } from "lucide-react";
+
+import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type VisitWithDetails, type InvoiceWithDetails, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
+import { type VisitWithDetails, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
-import { InvoiceForm } from "@/components/invoice-form";
-import { InvoiceList } from "@/components/invoice-list";
 
 
 interface Client {
@@ -48,8 +45,7 @@ export default function ProviderDashboard() {
     materials: [] as Array<{ type: AvailableMaterial; quantity: number }>,
   });
   const [photos, setPhotos] = useState<File[]>([]);
-  const [selectedVisitForInvoice, setSelectedVisitForInvoice] = useState<VisitWithDetails | null>(null);
-  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+
 
   const { data: clients } = useQuery<{ clients: Client[] }>({
     queryKey: ['/api/clients'],
@@ -64,14 +60,22 @@ export default function ProviderDashboard() {
     enabled: !!user?.provider?.id,
   });
 
-  const { data: invoices } = useQuery<{ invoices: InvoiceWithDetails[] }>({
-    queryKey: ['/api/providers', user?.provider?.id, 'invoices'],
-    enabled: !!user?.provider?.id,
-  });
+
 
   const createVisitMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return apiRequest('POST', '/api/visits', formData);
+      // Use fetch directly for FormData to avoid JSON conversion
+      const response = await fetch('/api/visits', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Request failed');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -146,6 +150,10 @@ export default function ProviderDashboard() {
     });
 
     console.log('Enviando dados para o backend...');
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
     createVisitMutation.mutate(formData);
   };
 
@@ -195,15 +203,7 @@ export default function ProviderDashboard() {
     !visitForm.clientId || well.clientId === visitForm.clientId
   ) || [];
 
-  const handleCreateInvoice = (visit: VisitWithDetails) => {
-    setSelectedVisitForInvoice(visit);
-    setIsInvoiceDialogOpen(true);
-  };
 
-  const handleInvoiceSuccess = () => {
-    setIsInvoiceDialogOpen(false);
-    setSelectedVisitForInvoice(null);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -211,10 +211,9 @@ export default function ProviderDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs defaultValue="visits" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
-            <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="visits">
@@ -554,14 +553,7 @@ export default function ProviderDashboard() {
                             </div>
                             <div className="flex items-center space-x-3">
                               {getStatusBadge(visit.status)}
-                              <Button
-                                size="sm"
-                                onClick={() => handleCreateInvoice(visit)}
-                                disabled={visit.status !== 'completed'}
-                              >
-                                <FileText className="h-4 w-4 mr-1" />
-                                {visit.status === 'completed' ? 'Criar Fatura' : 'Visita Pendente'}
-                              </Button>
+
                             </div>
                           </div>
                           
@@ -600,59 +592,7 @@ export default function ProviderDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="invoices">
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-gray-900">Minhas Faturas</h2>
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="h-4 w-4 text-success" />
-                      <span>Total Faturado: R$ {
-                        invoices?.invoices
-                          .filter(inv => inv.status === 'paid')
-                          .reduce((sum, inv) => sum + parseFloat(inv.totalAmount), 0)
-                          .toFixed(2)
-                          .replace('.', ',') || '0,00'
-                      }</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  {invoices?.invoices ? (
-                    <InvoiceList 
-                      invoices={invoices.invoices} 
-                      userType="provider"
-                      showActions={true}
-                    />
-                  ) : (
-                    <div className="text-center py-12">
-                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">Nenhuma fatura criada ainda.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
-
-        {/* Invoice Creation Dialog */}
-        <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Criar Fatura para Visita</DialogTitle>
-            </DialogHeader>
-            {selectedVisitForInvoice && (
-              <InvoiceForm
-                visit={selectedVisitForInvoice}
-                onSuccess={handleInvoiceSuccess}
-                onCancel={() => setIsInvoiceDialogOpen(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

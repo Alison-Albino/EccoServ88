@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-simple";
-import { loginSchema, insertVisitSchema, createInvoiceSchema, insertMaterialUsageSchema, AVAILABLE_MATERIALS } from "@shared/schema";
+import { loginSchema, insertVisitSchema, createInvoiceSchema, insertMaterialUsageSchema, insertWaterQualityParameterSchema, AVAILABLE_MATERIALS, WATER_PARAMETERS, WATER_STATUS_OPTIONS } from "@shared/schema";
 import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
@@ -216,6 +216,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (materialError) {
           console.error("Error saving materials:", materialError);
+        }
+      }
+
+      // Handle water quality parameters if provided
+      if (req.body.waterParameters) {
+        try {
+          const waterParameters = JSON.parse(req.body.waterParameters);
+          for (const param of waterParameters) {
+            await storage.createWaterQualityParameter({
+              visitId: visit.id,
+              parameter: param.parameter,
+              value: param.value,
+              unit: param.unit,
+              status: param.status,
+              notes: param.notes || null
+            });
+          }
+        } catch (parameterError) {
+          console.error("Error saving water parameters:", parameterError);
         }
       }
 
@@ -483,6 +502,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/materials", async (req, res) => {
     try {
       res.json({ materials: AVAILABLE_MATERIALS });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/water-parameters", async (req, res) => {
+    try {
+      res.json({ 
+        parameters: WATER_PARAMETERS,
+        statusOptions: WATER_STATUS_OPTIONS
+      });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

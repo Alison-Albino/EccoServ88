@@ -96,6 +96,17 @@ export const materialUsage = pgTable("material_usage", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const waterQualityParameters = pgTable("water_quality_parameters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitId: varchar("visit_id").references(() => visits.id).notNull(),
+  parameter: text("parameter").notNull(),
+  value: decimal("value", { precision: 10, scale: 3 }).notNull(),
+  unit: text("unit").notNull(), // mg/L, pH units, etc.
+  status: text("status").notNull(), // 'excellent', 'good', 'fair', 'poor', 'critical'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -138,6 +149,11 @@ export const insertMaterialUsageSchema = createInsertSchema(materialUsage).omit(
   createdAt: true,
 });
 
+export const insertWaterQualityParameterSchema = createInsertSchema(waterQualityParameters).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Login schema
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -174,6 +190,8 @@ export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertMaterialUsage = z.infer<typeof insertMaterialUsageSchema>;
 export type MaterialUsage = typeof materialUsage.$inferSelect;
+export type InsertWaterQualityParameter = z.infer<typeof insertWaterQualityParameterSchema>;
+export type WaterQualityParameter = typeof waterQualityParameters.$inferSelect;
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type CreateInvoiceRequest = z.infer<typeof createInvoiceSchema>;
 
@@ -205,6 +223,7 @@ export type InvoiceWithDetails = Invoice & {
 
 export type VisitWithMaterials = VisitWithDetails & {
   materials: MaterialUsage[];
+  waterParameters?: WaterQualityParameter[];
 };
 
 // Constants for available materials
@@ -221,6 +240,32 @@ export const AVAILABLE_MATERIALS = [
 ] as const;
 
 export type AvailableMaterial = typeof AVAILABLE_MATERIALS[number];
+
+// Water quality parameters (same as materials but for status/testing)
+export const WATER_PARAMETERS = [
+  'Cloro (livre ou total)',
+  'pH',
+  'Dureza total (Ca, Mg)',
+  'Cloretos (Cl⁻)',
+  'Sulfatos (SO₄²⁻)',
+  'Fósforo total',
+  'Ferro (Fe)',
+  'Manganês (Mn)',
+  'Nitrogênio total (amônia, nitrato, nitrito)',
+] as const;
+
+export type WaterParameter = typeof WATER_PARAMETERS[number];
+
+// Status options for water quality
+export const WATER_STATUS_OPTIONS = [
+  'excellent',
+  'good', 
+  'fair',
+  'poor',
+  'critical'
+] as const;
+
+export type WaterStatus = typeof WATER_STATUS_OPTIONS[number];
 
 // Material usage form schema
 export const materialUsageFormSchema = z.object({

@@ -13,7 +13,7 @@ import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Cl
 import { ImageViewer } from "@/components/image-viewer";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type VisitWithDetails, type ScheduledVisitWithDetails, type VisitWithMaterials, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
+import { type VisitWithDetails, type ScheduledVisitWithDetails, type VisitWithMaterials, AVAILABLE_MATERIALS, type AvailableMaterial, WATER_PARAMETERS, type WaterParameter } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -45,6 +45,7 @@ export default function ProviderDashboard() {
     nextVisitDate: "",
     observations: "",
     materials: [] as Array<{ type: AvailableMaterial; quantity: number }>,
+    waterParameters: [] as Array<{ parameter: WaterParameter; value: number; unit: string; status: string; notes?: string }>,
   });
   const [photos, setPhotos] = useState<File[]>([]);
   
@@ -137,6 +138,7 @@ export default function ProviderDashboard() {
         nextVisitDate: "",
         observations: "",
         materials: [],
+        waterParameters: [],
       });
       setPhotos([]);
     },
@@ -189,6 +191,11 @@ export default function ProviderDashboard() {
     formData.append('observations', visitForm.observations);
     formData.append('status', 'completed');
     formData.append('materials', JSON.stringify(visitForm.materials));
+    
+    // Anexar parâmetros de qualidade da água
+    if (visitForm.waterParameters.length > 0) {
+      formData.append('waterParameters', JSON.stringify(visitForm.waterParameters));
+    }
 
     photos.forEach((photo) => {
       formData.append('photos', photo);
@@ -426,6 +433,136 @@ export default function ProviderDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Water Quality Parameters */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Status da Água</Label>
+                <p className="text-sm text-gray-600">Registre os parâmetros de qualidade da água baseado nos testes realizados:</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {WATER_PARAMETERS.map((parameter) => {
+                    const existingParam = visitForm.waterParameters.find(p => p.parameter === parameter);
+                    
+                    return (
+                      <div key={parameter} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-gray-700">
+                            {parameter}
+                          </label>
+                          <Checkbox
+                            checked={!!existingParam}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                const newParams = [...visitForm.waterParameters, {
+                                  parameter,
+                                  value: 0,
+                                  unit: parameter === 'pH' ? 'pH' : 'mg/L',
+                                  status: 'good',
+                                  notes: ''
+                                }];
+                                setVisitForm({ ...visitForm, waterParameters: newParams });
+                              } else {
+                                const newParams = visitForm.waterParameters.filter(p => p.parameter !== parameter);
+                                setVisitForm({ ...visitForm, waterParameters: newParams });
+                              }
+                            }}
+                          />
+                        </div>
+                        
+                        {existingParam && (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs text-gray-500">Valor</Label>
+                                <Input
+                                  type="number"
+                                  step="0.001"
+                                  placeholder="0.000"
+                                  value={existingParam.value}
+                                  onChange={(e) => {
+                                    const newParams = visitForm.waterParameters.map(p => 
+                                      p.parameter === parameter 
+                                        ? { ...p, value: parseFloat(e.target.value) || 0 }
+                                        : p
+                                    );
+                                    setVisitForm({ ...visitForm, waterParameters: newParams });
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-gray-500">Unidade</Label>
+                                <Select
+                                  value={existingParam.unit}
+                                  onValueChange={(value) => {
+                                    const newParams = visitForm.waterParameters.map(p => 
+                                      p.parameter === parameter 
+                                        ? { ...p, unit: value }
+                                        : p
+                                    );
+                                    setVisitForm({ ...visitForm, waterParameters: newParams });
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="mg/L">mg/L</SelectItem>
+                                    <SelectItem value="pH">pH</SelectItem>
+                                    <SelectItem value="ppm">ppm</SelectItem>
+                                    <SelectItem value="μg/L">μg/L</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs text-gray-500">Status</Label>
+                              <Select
+                                value={existingParam.status}
+                                onValueChange={(value) => {
+                                  const newParams = visitForm.waterParameters.map(p => 
+                                    p.parameter === parameter 
+                                      ? { ...p, status: value }
+                                      : p
+                                  );
+                                  setVisitForm({ ...visitForm, waterParameters: newParams });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="excellent">Excelente</SelectItem>
+                                  <SelectItem value="good">Bom</SelectItem>
+                                  <SelectItem value="fair">Regular</SelectItem>
+                                  <SelectItem value="poor">Ruim</SelectItem>
+                                  <SelectItem value="critical">Crítico</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs text-gray-500">Observações</Label>
+                              <Input
+                                placeholder="Observações sobre o parâmetro..."
+                                value={existingParam.notes || ''}
+                                onChange={(e) => {
+                                  const newParams = visitForm.waterParameters.map(p => 
+                                    p.parameter === parameter 
+                                      ? { ...p, notes: e.target.value }
+                                      : p
+                                  );
+                                  setVisitForm({ ...visitForm, waterParameters: newParams });
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               
               <div>
                 <Label htmlFor="observations">Observações *</Label>
@@ -489,6 +626,7 @@ export default function ProviderDashboard() {
                       nextVisitDate: "",
                       observations: "",
                       materials: [],
+                      waterParameters: [],
                     });
                     setPhotos([]);
                   }}
@@ -685,6 +823,37 @@ export default function ProviderDashboard() {
                                     <div className="text-xs text-gray-500">{material.quantityGrams}g</div>
                                     {material.notes && (
                                       <div className="text-xs text-gray-500 mt-1">{material.notes}</div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Water quality parameters */}
+                          {visit.waterParameters && visit.waterParameters.length > 0 && (
+                            <div className="mb-4">
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">Status da água:</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {visit.waterParameters.map((param, index) => (
+                                  <div key={index} className="text-sm text-gray-600 bg-blue-50 rounded-lg p-3">
+                                    <div className="font-medium">{param.parameter}</div>
+                                    <div className="text-xs text-gray-500">{param.value} {param.unit}</div>
+                                    <div className={`text-xs font-medium mt-1 ${
+                                      param.status === 'excellent' ? 'text-green-600' :
+                                      param.status === 'good' ? 'text-blue-600' :
+                                      param.status === 'fair' ? 'text-yellow-600' :
+                                      param.status === 'poor' ? 'text-orange-600' :
+                                      'text-red-600'
+                                    }`}>
+                                      {param.status === 'excellent' ? 'Excelente' :
+                                       param.status === 'good' ? 'Bom' :
+                                       param.status === 'fair' ? 'Regular' :
+                                       param.status === 'poor' ? 'Ruim' :
+                                       'Crítico'}
+                                    </div>
+                                    {param.notes && (
+                                      <div className="text-xs text-gray-500 mt-1">{param.notes}</div>
                                     )}
                                   </div>
                                 ))}

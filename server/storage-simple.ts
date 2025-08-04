@@ -13,6 +13,8 @@ import {
   type InsertInvoice, 
   type MaterialUsage,
   type InsertMaterialUsage,
+  type WaterQualityParameter,
+  type InsertWaterQualityParameter,
   type UserWithProfile, 
   type WellWithClient, 
   type VisitWithDetails, 
@@ -93,6 +95,7 @@ export class MemStorage implements IStorage {
   private visits: Map<string, Visit> = new Map();
   private invoices: Map<string, Invoice> = new Map();
   private materialUsage: Map<string, MaterialUsage> = new Map();
+  private waterQualityParameters: Map<string, WaterQualityParameter> = new Map();
   private scheduledVisits: Map<string, ScheduledVisit> = new Map();
 
   constructor() {
@@ -545,12 +548,14 @@ export class MemStorage implements IStorage {
     }
 
     const materials = await this.getMaterialUsageByVisitId(visitId);
+    const waterParameters = await this.getWaterQualityParametersByVisitId(visitId);
 
     return {
       ...visit,
       well: { ...well, client: { ...client, user: clientUser } },
       provider: { ...provider, user: providerUser },
-      materials
+      materials,
+      waterParameters
     };
   }
 
@@ -569,6 +574,21 @@ export class MemStorage implements IStorage {
       materialType,
       totalGrams
     }));
+  }
+
+  // Water quality parameter operations
+  async createWaterQualityParameter(parameterData: InsertWaterQualityParameter): Promise<WaterQualityParameter> {
+    const parameter: WaterQualityParameter = {
+      ...parameterData,
+      id: randomUUID(),
+      createdAt: new Date().toISOString()
+    };
+    this.waterQualityParameters.set(parameter.id, parameter);
+    return parameter;
+  }
+
+  async getWaterQualityParametersByVisitId(visitId: string): Promise<WaterQualityParameter[]> {
+    return Array.from(this.waterQualityParameters.values()).filter(p => p.visitId === visitId);
   }
 
   // Scheduled visit operations

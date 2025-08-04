@@ -15,6 +15,7 @@ export const users = pgTable("users", {
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  cpf: text("cpf"),
   address: text("address"),
   phone: text("phone"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -24,8 +25,12 @@ export const wells = pgTable("wells", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: varchar("client_id").references(() => clients.id).notNull(),
   name: text("name").notNull(),
-  type: text("type").notNull(), // 'residential', 'industrial', 'agricultural'
+  type: text("type").notNull(), // 'artesiano', 'semi-artesiano', 'freatico', 'tubular'
   location: text("location"),
+  depth: decimal("depth", { precision: 10, scale: 2 }),
+  diameter: decimal("diameter", { precision: 10, scale: 2 }),
+  installationDate: timestamp("installation_date"),
+  description: text("description"),
   status: text("status").notNull().default('active'), // 'active', 'maintenance', 'attention', 'inactive'
   createdAt: timestamp("created_at").defaultNow(),
 });

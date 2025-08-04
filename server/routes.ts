@@ -89,15 +89,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create client profile
   app.post("/api/clients", async (req, res) => {
     try {
-      const { userId, address, phone } = req.body;
+      const { name, cpf, email, address, phone, password } = req.body;
       
-      const client = await storage.createClient({
-        userId,
-        address,
-        phone
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Usuário já existe com este email' });
+      }
+
+      // Create user first
+      const user = await storage.createUser({
+        name,
+        email,
+        password: password || "123456", // Default password
+        userType: "client"
       });
 
-      res.status(201).json(client);
+      // Then create client profile
+      const client = await storage.createClient({
+        userId: user.id,
+        address,
+        phone,
+        cpf
+      });
+
+      res.status(201).json({ user, client });
     } catch (error) {
       console.error('Create client error:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });

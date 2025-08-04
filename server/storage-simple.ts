@@ -160,8 +160,10 @@ export class MemStorage implements IStorage {
     const clientProfile: Client = {
       id: "client-profile-1",
       userId: "client-user-1",
+      cpf: "123.456.789-00",
       address: "Rua das Flores, 123, São Paulo - SP",
-      phone: "(11) 99999-9999"
+      phone: "(11) 99999-9999",
+      createdAt: new Date("2024-01-01T00:00:00Z")
     };
     this.clients.set(clientProfile.id, clientProfile);
 

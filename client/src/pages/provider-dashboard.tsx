@@ -60,6 +60,15 @@ export default function ProviderDashboard() {
     installationDate: "",
     description: "",
   });
+
+  // Client registration form
+  const [clientForm, setClientForm] = useState({
+    name: "",
+    cpf: "",
+    email: "",
+    address: "",
+    phone: "",
+  });
   
   // Filters for visits
   const [visitFilters, setVisitFilters] = useState({
@@ -114,6 +123,48 @@ export default function ProviderDashboard() {
   });
 
 
+
+  // Create client mutation
+  const createClientMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          password: "123456", // Senha padrão
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao cadastrar cliente');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Cliente cadastrado com sucesso! Senha padrão: 123456",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      setClientForm({
+        name: "",
+        cpf: "",
+        email: "",
+        address: "",
+        phone: "",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao cadastrar cliente",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Create well mutation
   const createWellMutation = useMutation({
@@ -281,6 +332,44 @@ export default function ProviderDashboard() {
     }
   };
 
+  const handleClientSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validação
+    if (!clientForm.name || !clientForm.cpf || !clientForm.email || !clientForm.address || !clientForm.phone) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validação básica de CPF (apenas formato)
+    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+    if (!cpfRegex.test(clientForm.cpf)) {
+      toast({
+        title: "CPF inválido",
+        description: "Por favor, digite o CPF no formato XXX.XXX.XXX-XX",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientForm.email)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, digite um email válido",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createClientMutation.mutate(clientForm);
+  };
+
   const handleWellSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -345,8 +434,9 @@ export default function ProviderDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs defaultValue="visits" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
+            <TabsTrigger value="clients">Cadastrar Cliente</TabsTrigger>
             <TabsTrigger value="wells">Cadastrar Poços</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
             <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
@@ -803,6 +893,142 @@ export default function ProviderDashboard() {
               )}
             </div>
           </div>
+            </div>
+          </TabsContent>
+
+          {/* Client Registration Tab */}
+          <TabsContent value="clients">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Cadastrar Novo Cliente</h2>
+                <p className="text-sm text-gray-600 mt-1">Cadastre um novo cliente com senha padrão 123456</p>
+              </div>
+              
+              <form onSubmit={handleClientSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="clientName">Nome Completo *</Label>
+                    <Input
+                      id="clientName"
+                      value={clientForm.name}
+                      onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+                      placeholder="João da Silva"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="clientCpf">CPF *</Label>
+                    <Input
+                      id="clientCpf"
+                      value={clientForm.cpf}
+                      onChange={(e) => {
+                        // Formatar CPF automaticamente
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 11) {
+                          value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                          setClientForm({ ...clientForm, cpf: value });
+                        }
+                      }}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="clientEmail">Email *</Label>
+                    <Input
+                      id="clientEmail"
+                      type="email"
+                      value={clientForm.email}
+                      onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                      placeholder="joao@email.com"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="clientPhone">Telefone *</Label>
+                    <Input
+                      id="clientPhone"
+                      value={clientForm.phone}
+                      onChange={(e) => {
+                        // Formatar telefone automaticamente
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 11) {
+                          if (value.length <= 10) {
+                            value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                          } else {
+                            value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                          }
+                          setClientForm({ ...clientForm, phone: value });
+                        }
+                      }}
+                      placeholder="(11) 99999-9999"
+                      maxLength={15}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="clientAddress">Endereço Completo *</Label>
+                  <Textarea
+                    id="clientAddress"
+                    value={clientForm.address}
+                    onChange={(e) => setClientForm({ ...clientForm, address: e.target.value })}
+                    placeholder="Rua das Flores, 123, Centro, São Paulo - SP, CEP: 01234-567"
+                    rows={3}
+                    required
+                  />
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 text-sm font-semibold">i</span>
+                      </div>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-blue-800">Senha Padrão</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        O cliente será criado com a senha padrão <strong>123456</strong>. 
+                        Ele poderá alterar a senha após o primeiro login.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-4">
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    disabled={createClientMutation.isPending}
+                  >
+                    {createClientMutation.isPending ? "Cadastrando..." : "Cadastrar Cliente"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="px-6"
+                    onClick={() => {
+                      setClientForm({
+                        name: "",
+                        cpf: "",
+                        email: "",
+                        address: "",
+                        phone: "",
+                      });
+                    }}
+                  >
+                    Limpar
+                  </Button>
+                </div>
+              </form>
             </div>
           </TabsContent>
 

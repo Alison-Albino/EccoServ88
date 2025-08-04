@@ -277,7 +277,7 @@ export default function ClientDashboard() {
                           {well.installationDate && (
                             <div className="mt-3">
                               <span className="text-gray-500">Instalado em:</span>
-                              <p className="font-medium">{format(new Date(well.installationDate), 'dd/MM/yyyy')}</p>
+                              <p className="font-medium">{well.installationDate ? format(new Date(well.installationDate), 'dd/MM/yyyy') : 'Data não disponível'}</p>
                             </div>
                           )}
                         </div>
@@ -345,7 +345,7 @@ export default function ClientDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             {getVisitStatusBadge(visit.status)}
-                            <span className="text-sm text-gray-500">{format(new Date(visit.visitDate), 'dd/MM/yyyy')}</span>
+                            <span className="text-sm text-gray-500">{visit.visitDate ? format(new Date(visit.visitDate), 'dd/MM/yyyy') : 'Data inválida'}</span>
                           </div>
                         </div>
                         
@@ -378,7 +378,7 @@ export default function ClientDashboard() {
                         
                         <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                           <div className="text-sm text-gray-500">
-                            Criada em {format(new Date(visit.createdAt), 'dd/MM/yyyy HH:mm')}
+                            Criada em {visit.createdAt ? format(new Date(visit.createdAt), 'dd/MM/yyyy HH:mm') : 'Data não disponível'}
                           </div>
                           <div className="flex gap-2">
                             {visit.invoiceUrl && (
@@ -429,7 +429,7 @@ export default function ClientDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             {getScheduledVisitStatusBadge(scheduled.status)}
-                            <span className="text-sm text-gray-500">{format(new Date(scheduled.scheduledDate), 'dd/MM/yyyy HH:mm')}</span>
+                            <span className="text-sm text-gray-500">{scheduled.scheduledDate ? format(new Date(scheduled.scheduledDate), 'dd/MM/yyyy HH:mm') : 'Data inválida'}</span>
                           </div>
                         </div>
                         
@@ -458,7 +458,7 @@ export default function ClientDashboard() {
                         
                         <div className="pt-4 border-t border-gray-100">
                           <p className="text-sm text-gray-500">
-                            Agendado em {format(new Date(scheduled.createdAt), 'dd/MM/yyyy HH:mm')}
+                            Agendado em {scheduled.createdAt ? format(new Date(scheduled.createdAt), 'dd/MM/yyyy HH:mm') : 'Data não disponível'}
                           </p>
                         </div>
                       </div>

@@ -86,11 +86,12 @@ export default function AdminDashboard() {
       };
 
       // Register user
-      const userResponse = await apiRequest('/api/register', 'POST', userData);
+      const userResponse = await apiRequest('POST', '/api/register', userData);
+      const user = await userResponse.json();
 
       // Create provider profile
-      await apiRequest('/api/providers', 'POST', {
-        userId: userResponse.id,
+      await apiRequest('POST', '/api/providers', {
+        userId: user.id,
         specialties: data.specialties.split(',').map(s => s.trim()),
         phone: data.phone,
       });
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
       toast({
         title: "Erro no cadastro",
         description: error.message || "Ocorreu um erro ao cadastrar o prestador.",
-        variant: "error",
+        variant: "destructive",
       });
     },
   });
@@ -238,7 +239,7 @@ export default function AdminDashboard() {
             title="Poços com Problemas"
             value={problemWells}
             icon={AlertTriangle}
-            variant="error"
+            variant="destructive"
           />
         </div>
 
@@ -448,7 +449,7 @@ export default function AdminDashboard() {
                               Cliente: {well.client.user.name} • Localização: {well.location}
                             </p>
                             <p className="text-sm text-gray-600">
-                              Tipo: {well.type || 'N/A'} • Profundidade: {well.depth || 'N/A'}m
+                              Tipo: {well.type || 'N/A'}
                             </p>
                           </div>
                           <div className="flex items-center space-x-3">

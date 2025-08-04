@@ -129,6 +129,13 @@ export default function ProviderDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'scheduled-visits'] });
       queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'visits'] });
       
+      // Invalidate admin queries to update admin dashboard in real-time
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/visits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/scheduled-visits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/materials/all-consumption'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/wells'] });
+      
       setVisitForm({
         visitDate: "",
         clientId: "",

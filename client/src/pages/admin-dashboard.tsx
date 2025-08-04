@@ -67,32 +67,39 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: stats } = useQuery<AdminStats>({
+  const { data: stats, refetch: refetchStats } = useQuery<AdminStats>({
     queryKey: ['/api/admin/stats'],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  const { data: visits } = useQuery<{ visits: VisitWithDetails[] }>({
+  const { data: visits, refetch: refetchVisits } = useQuery<{ visits: VisitWithDetails[] }>({
     queryKey: ['/api/admin/visits'],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  const { data: wells } = useQuery<{ wells: WellWithClient[] }>({
+  const { data: wells, refetch: refetchWells } = useQuery<{ wells: WellWithClient[] }>({
     queryKey: ['/api/admin/wells'],
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
-  const { data: providers } = useQuery<{ providers: any[] }>({
+  const { data: providers, refetch: refetchProviders } = useQuery<{ providers: any[] }>({
     queryKey: ['/api/admin/providers'],
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
-  const { data: scheduledVisits } = useQuery<{ scheduledVisits: any[] }>({
+  const { data: scheduledVisits, refetch: refetchScheduledVisits } = useQuery<{ scheduledVisits: any[] }>({
     queryKey: ['/api/admin/scheduled-visits'],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
-  const { data: materialConsumption } = useQuery<{ consumption: any[] }>({
+  const { data: materialConsumption, refetch: refetchMaterialConsumption } = useQuery<{ consumption: any[] }>({
     queryKey: ['/api/admin/materials/all-consumption'],
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
-  const { data: clients } = useQuery<{ clients: any[] }>({
+  const { data: clients, refetch: refetchClients } = useQuery<{ clients: any[] }>({
     queryKey: ['/api/admin/clients'],
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   const registerProviderMutation = useMutation({
@@ -146,6 +153,8 @@ export default function AdminDashboard() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/providers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/visits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/wells'] });
     },
     onError: (error: any) => {
       toast({
@@ -265,15 +274,36 @@ export default function AdminDashboard() {
   const problemWells = wells?.wells.filter(w => w.status === 'problem').length || 0;
   const totalScheduled = scheduledVisits?.scheduledVisits?.length || 0;
 
+  // Manual refresh function
+  const handleRefreshAll = () => {
+    refetchStats();
+    refetchVisits();
+    refetchWells();
+    refetchProviders();
+    refetchScheduledVisits();
+    refetchMaterialConsumption();
+    refetchClients();
+    toast({
+      title: "Dados atualizados!",
+      description: "Todas as informações foram recarregadas.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-          <p className="text-gray-600 mt-2">Bem-vindo, {user?.name}!</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
+            <p className="text-gray-600 mt-2">Bem-vindo, {user?.name}!</p>
+          </div>
+          <Button onClick={handleRefreshAll} variant="outline" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Atualizar Dados
+          </Button>
         </div>
 
         {/* Stats Cards */}

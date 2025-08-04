@@ -313,6 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const providers = await storage.getAllProviders();
       const wells = await storage.getWellsWithClient();
       const visits = await storage.getVisitsWithDetails();
+      const scheduledVisits = await storage.getScheduledVisitsWithDetails();
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
@@ -325,7 +326,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalClients: clients.length,
         totalProviders: providers.length,
         totalWells: wells.length,
-        monthlyVisits: monthlyVisits.length
+        totalVisits: visits.length,
+        monthlyVisits: monthlyVisits.length,
+        scheduledVisits: scheduledVisits.length
       });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });

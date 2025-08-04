@@ -46,15 +46,25 @@ Preferred communication style: Simple, everyday language.
 - **Wells**: Client-owned assets with location, type, and status tracking
 - **Providers**: Service technicians with specialties and contact information
 - **Visits**: Service appointments linking providers to wells with observations, photos, and status
-- **Invoices**: Financial records linking visits to billing information with status tracking
+- **Scheduled Visits**: Future appointments with automatic scheduling from completed visits
+- **Material Usage**: Tracking of materials consumed during visits with quantities
+- **Water Parameters**: Water quality measurements with status indicators
 
 ### Application Pages
 - **Landing Page** (`/`): Modern homepage with user type selection and feature overview
 - **Registration Page** (`/register`): Multi-step registration for clients and providers with conditional fields
 - **Login Page** (`/login`): Authentication with role-based dashboard redirection
-- **Client Dashboard**: Well management, visit history, and invoice viewing
-- **Provider Dashboard**: Visit scheduling, invoice generation, and service tracking
-- **Admin Dashboard**: System overview with comprehensive reporting and user management
+- **Client Dashboard**: Well management, visit history, and scheduled visits viewing
+- **Provider Dashboard**: Visit creation with materials/water tracking, scheduling, and comprehensive reporting
+- **Admin Dashboard**: Complete system oversight with:
+  - Real-time statistics (clients, providers, wells, visits, scheduled visits)
+  - All visits from all providers and clients with filtering
+  - All scheduled visits across the system
+  - All clients with well and visit statistics
+  - All wells with status tracking
+  - Complete material consumption reporting with visualizations
+  - Provider management with deletion and password reset capabilities
+  - Provider registration functionality
 
 ### External Dependencies
 - **Database**: Neon Database (PostgreSQL serverless)

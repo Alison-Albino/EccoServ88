@@ -37,7 +37,9 @@ interface AdminStats {
   totalClients: number;
   totalProviders: number;
   totalWells: number;
+  totalVisits: number;
   monthlyVisits: number;
+  scheduledVisits: number;
   scheduledVisits?: number;
 }
 
@@ -87,6 +89,10 @@ export default function AdminDashboard() {
 
   const { data: materialConsumption } = useQuery<{ consumption: any[] }>({
     queryKey: ['/api/admin/materials/all-consumption'],
+  });
+
+  const { data: clients } = useQuery<{ clients: any[] }>({
+    queryKey: ['/api/admin/clients'],
   });
 
   const registerProviderMutation = useMutation({
@@ -285,20 +291,20 @@ export default function AdminDashboard() {
             variant="success"
           />
           <StatsCard
-            title="Poços Ativos"
-            value={activeWells}
+            title="Total de Poços"
+            value={stats?.totalWells || 0}
             icon={Droplet}
             variant="primary"
           />
           <StatsCard
-            title="Visitas Concluídas"
-            value={completedVisits}
+            title="Total de Visitas"
+            value={stats?.totalVisits || 0}
             icon={CheckCircle}
             variant="success"
           />
           <StatsCard
             title="Agendamentos"
-            value={totalScheduled}
+            value={stats?.scheduledVisits || 0}
             icon={Calendar}
             variant="warning"
           />
@@ -311,14 +317,15 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="visits">Visitas Completas</TabsTrigger>
+            <TabsTrigger value="visits">Visitas</TabsTrigger>
             <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
-            <TabsTrigger value="wells">Status dos Poços</TabsTrigger>
-            <TabsTrigger value="materials">Materiais Utilizados</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
+            <TabsTrigger value="wells">Poços</TabsTrigger>
+            <TabsTrigger value="materials">Materiais</TabsTrigger>
             <TabsTrigger value="providers">Prestadores</TabsTrigger>
-            <TabsTrigger value="register">Cadastrar Prestador</TabsTrigger>
+            <TabsTrigger value="register">Cadastrar</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -405,7 +412,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-gray-900">Todas as Visitas do Sistema</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Todas as Visitas ({visits?.visits?.length || 0})</h2>
                   <div className="flex space-x-3">
                     <Input 
                       placeholder="Buscar por ID, poço, cliente ou técnico..." 
@@ -592,6 +599,68 @@ export default function AdminDashboard() {
                       <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500">
                         {scheduledVisits ? 'Nenhum agendamento futuro.' : 'Carregando agendamentos...'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="clients">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Todos os Clientes do Sistema</h2>
+                  <div className="text-sm text-gray-500">
+                    Total: {clients?.clients?.length || 0} clientes
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  {clients?.clients && clients.clients.length > 0 ? (
+                    clients.clients.map((client) => {
+                      const clientWells = wells?.wells?.filter(w => w.clientId === client.id) || [];
+                      const clientVisits = visits?.visits?.filter(v => clientWells.some(w => w.id === v.wellId)) || [];
+                      const lastVisit = clientVisits
+                        .sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime())[0];
+
+                      return (
+                        <div key={client.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-lg">
+                                {client.user.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1">
+                                <strong>Email:</strong> {client.user.email} • 
+                                <strong>Telefone:</strong> {client.phone || 'N/A'}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <strong>Endereço:</strong> {client.address || 'N/A'}
+                              </p>
+                              <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
+                                <span><strong>Poços:</strong> {clientWells.length}</span>
+                                <span><strong>Visitas:</strong> {clientVisits.length}</span>
+                                <span><strong>Última visita:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy') : 'Nunca'}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Ativo
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">
+                        {clients ? 'Nenhum cliente cadastrado.' : 'Carregando clientes...'}
                       </p>
                     </div>
                   )}

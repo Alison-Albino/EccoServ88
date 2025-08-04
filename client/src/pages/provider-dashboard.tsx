@@ -104,10 +104,16 @@ export default function ProviderDashboard() {
     e.preventDefault();
     
     console.log('Formulário submetido:', visitForm);
-    console.log('User provider ID:', user?.provider?.id);
+    console.log('User completo:', user);
+    console.log('User provider:', user?.provider);
     
     if (!user?.provider?.id) {
       console.error('Provider ID não encontrado');
+      toast({
+        title: "Erro de autenticação",
+        description: "Perfil de prestador não encontrado. Faça login novamente.",
+        variant: "destructive",
+      });
       return;
     }
 

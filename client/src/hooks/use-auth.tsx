@@ -4,7 +4,7 @@ import { authService } from "@/lib/auth";
 
 interface AuthContextType {
   user: UserWithProfile | null;
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<UserWithProfile>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const user = await authService.login(credentials);
       setUser(user);
+      return user;
     } catch (error) {
       throw error;
     } finally {

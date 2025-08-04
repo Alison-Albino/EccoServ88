@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,17 +20,29 @@ export default function Login() {
   
   const { login } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await login(credentials);
+      const user = await login(credentials);
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao EccoServ",
       });
+      
+      // Redirect based on user type
+      if (user.userType === "client") {
+        setLocation("/client");
+      } else if (user.userType === "provider") {
+        setLocation("/provider");
+      } else if (user.userType === "admin") {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
     } catch (error) {
       toast({
         title: "Erro no login",

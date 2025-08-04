@@ -209,14 +209,21 @@ export class MemStorage implements IStorage {
     const user = this.users.get(id);
     if (!user) return undefined;
 
-    let profile = null;
+    const result: UserWithProfile = { ...user };
+    
     if (user.userType === 'client') {
-      profile = Array.from(this.clients.values()).find(c => c.userId === id);
+      const client = Array.from(this.clients.values()).find(c => c.userId === id);
+      if (client) {
+        result.client = client;
+      }
     } else if (user.userType === 'provider') {
-      profile = Array.from(this.providers.values()).find(p => p.userId === id);
+      const provider = Array.from(this.providers.values()).find(p => p.userId === id);
+      if (provider) {
+        result.provider = provider;
+      }
     }
 
-    return { ...user, profile } as UserWithProfile;
+    return result;
   }
 
   // Client operations

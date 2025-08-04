@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock } from "lucide-react";
+import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock, Search, Filter, X } from "lucide-react";
 import { ImageViewer } from "@/components/image-viewer";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +47,13 @@ export default function ProviderDashboard() {
     materials: [] as Array<{ type: AvailableMaterial; quantity: number }>,
   });
   const [photos, setPhotos] = useState<File[]>([]);
+  
+  // Filters for visits
+  const [visitFilters, setVisitFilters] = useState({
+    searchQuery: "",
+    startDate: "",
+    endDate: "",
+  });
 
 
   const { data: clients } = useQuery<{ clients: Client[] }>({
@@ -61,6 +68,32 @@ export default function ProviderDashboard() {
     queryKey: ['/api/providers', user?.provider?.id, 'visits-with-materials'],
     enabled: !!user?.provider?.id,
   });
+
+  // Filter visits based on search and date filters
+  const filteredVisits = visits?.visits?.filter((visit) => {
+    const searchTerm = visitFilters.searchQuery.toLowerCase();
+    const visitDate = new Date(visit.visitDate);
+    
+    // Default to current month if no dates provided
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const startDate = visitFilters.startDate ? new Date(visitFilters.startDate) : startOfMonth;
+    const endDate = visitFilters.endDate ? new Date(visitFilters.endDate) : endOfMonth;
+    
+    // Date range filter
+    const dateInRange = visitDate >= startDate && visitDate <= endDate;
+    
+    // Search filter (ID, client name, well name, observations)
+    const matchesSearch = !searchTerm || 
+      visit.id.toLowerCase().includes(searchTerm) ||
+      visit.well.client.user.name.toLowerCase().includes(searchTerm) ||
+      visit.well.name.toLowerCase().includes(searchTerm) ||
+      visit.observations.toLowerCase().includes(searchTerm);
+    
+    return dateInRange && matchesSearch;
+  }) || [];
 
   const { data: scheduledVisits, isLoading: isLoadingScheduled } = useQuery<{ scheduledVisits: ScheduledVisitWithDetails[] }>({
     queryKey: ['/api/providers', user?.provider?.id, 'scheduled-visits'],
@@ -561,6 +594,42 @@ export default function ProviderDashboard() {
                 </div>
                 
                 <div className="p-6">
+                  {/* Search and Filter Controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Buscar por ID, cliente, poço ou observações..."
+                        value={visitFilters.searchQuery}
+                        onChange={(e) => setVisitFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm text-gray-600">Data início</Label>
+                      <Input
+                        type="date"
+                        value={visitFilters.startDate}
+                        onChange={(e) => setVisitFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm text-gray-600">Data fim</Label>
+                      <Input
+                        type="date"
+                        value={visitFilters.endDate}
+                        onChange={(e) => setVisitFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Results info */}
+                  <div className="text-sm text-gray-500 mb-4">
+                    Mostrando {filteredVisits.length} de {visits?.visits?.length || 0} visitas
+                    {!visitFilters.startDate && !visitFilters.endDate && ' (mês atual)'}
+                  </div>
                   {isLoading ? (
                     <div className="space-y-4">
                       {[1, 2, 3, 4, 5].map((i) => (
@@ -573,7 +642,7 @@ export default function ProviderDashboard() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {visits?.visits.map((visit) => (
+                      {filteredVisits.map((visit) => (
                         <div key={visit.id} className="border border-gray-200 rounded-lg p-6">
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex-1">
@@ -581,6 +650,9 @@ export default function ProviderDashboard() {
                                 {visit.well.client.user.name} - {visit.well.name}
                               </h4>
                               <p className="text-sm text-gray-600 mt-1">
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mr-2">
+                                  ID: {visit.id}
+                                </span>
                                 {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • {visit.well.location}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
@@ -647,6 +719,20 @@ export default function ProviderDashboard() {
                         </div>
                       ))}
                       
+                      {filteredVisits.length === 0 && visits?.visits && visits.visits.length > 0 && (
+                        <div className="text-center py-12">
+                          <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">Nenhuma visita encontrada com os filtros aplicados.</p>
+                          <Button 
+                            variant="outline" 
+                            className="mt-4"
+                            onClick={() => setVisitFilters({ searchQuery: "", startDate: "", endDate: "" })}
+                          >
+                            Limpar filtros
+                          </Button>
+                        </div>
+                      )}
+                      
                       {(!visits?.visits || visits.visits.length === 0) && (
                         <div className="text-center py-12">
                           <Wrench className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -688,6 +774,9 @@ export default function ProviderDashboard() {
                                 {scheduledVisit.well?.client?.user?.name || 'Cliente'} - {scheduledVisit.well?.name || 'Poço'}
                               </h4>
                               <p className="text-sm text-gray-600 mt-1">
+                                <span className="font-mono bg-blue-100 px-2 py-1 rounded text-xs mr-2">
+                                  Agendamento: {scheduledVisit.id}
+                                </span>
                                 {scheduledVisit.well?.location || 'Localização não informada'}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">

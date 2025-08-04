@@ -157,6 +157,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/providers/:providerId/visits-with-materials", async (req, res) => {
+    try {
+      const provider = await storage.getProvider(req.params.providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "Provider not found" });
+      }
+
+      const visits = await storage.getVisitsByProviderId(req.params.providerId);
+      const visitsWithMaterials = [];
+      
+      for (const visit of visits) {
+        const visitWithMaterials = await storage.getVisitWithMaterials(visit.id);
+        if (visitWithMaterials) {
+          visitsWithMaterials.push(visitWithMaterials);
+        }
+      }
+
+      res.json({ visits: visitsWithMaterials });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/visits", upload.array('photos', 10), async (req, res) => {
     try {
       console.log('Received visit data:', req.body);

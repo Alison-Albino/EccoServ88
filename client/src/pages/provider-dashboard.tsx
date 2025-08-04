@@ -10,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock } from "lucide-react";
+import { ImageViewer } from "@/components/image-viewer";
+import { CountdownTimer } from "@/components/countdown-timer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type VisitWithDetails, type ScheduledVisitWithDetails, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
+import { type VisitWithDetails, type ScheduledVisitWithDetails, type VisitWithMaterials, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -55,8 +57,8 @@ export default function ProviderDashboard() {
     queryKey: ['/api/wells'],
   });
 
-  const { data: visits, isLoading } = useQuery<{ visits: VisitWithDetails[] }>({
-    queryKey: ['/api/providers', user?.provider?.id, 'visits'],
+  const { data: visits, isLoading } = useQuery<{ visits: VisitWithMaterials[] }>({
+    queryKey: ['/api/providers', user?.provider?.id, 'visits-with-materials'],
     enabled: !!user?.provider?.id,
   });
 
@@ -156,9 +158,9 @@ export default function ProviderDashboard() {
 
     console.log('Enviando dados para o backend...');
     console.log('FormData contents:');
-    for (let [key, value] of formData.entries()) {
+    formData.forEach((value, key) => {
       console.log(key, value);
-    }
+    });
     createVisitMutation.mutate(formData);
   };
 
@@ -492,15 +494,45 @@ export default function ProviderDashboard() {
                         {getStatusBadge(visit.status)}
                       </div>
                       <p className="text-sm text-gray-700 mb-3">{visit.observations}</p>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center">
-                          {getServiceIcon(visit.serviceType)}
-                          <span className="ml-1">{getServiceTypeLabel(visit.serviceType)}</span>
-                        </span>
-                        <span className="flex items-center">
-                          <Camera className="h-4 w-4 mr-1" />
-                          {visit.photos?.length || 0} fotos
-                        </span>
+                      
+                      {/* Materials used */}
+                      {visit.materials && visit.materials.length > 0 && (
+                        <div className="mb-3">
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Materiais utilizados:</h5>
+                          <div className="space-y-1">
+                            {visit.materials.map((material, index) => (
+                              <div key={index} className="text-xs text-gray-600 bg-gray-50 rounded px-2 py-1">
+                                <span className="font-medium">{material.materialType}</span>: {material.quantityGrams}g
+                                {material.notes && <span className="text-gray-500"> - {material.notes}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <span className="flex items-center">
+                            {getServiceIcon(visit.serviceType)}
+                            <span className="ml-1">{getServiceTypeLabel(visit.serviceType)}</span>
+                          </span>
+                          <span className="flex items-center">
+                            <Camera className="h-4 w-4 mr-1" />
+                            {visit.photos?.length || 0} fotos
+                          </span>
+                          {visit.materials && visit.materials.length > 0 && (
+                            <span className="flex items-center">
+                              <FlaskConical className="h-4 w-4 mr-1" />
+                              {visit.materials.length} materiais
+                            </span>
+                          )}
+                        </div>
+                        {visit.photos && visit.photos.length > 0 && (
+                          <ImageViewer 
+                            images={visit.photos} 
+                            className="text-xs"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -565,23 +597,48 @@ export default function ProviderDashboard() {
                           
                           <p className="text-sm text-gray-700 mb-3">{visit.observations}</p>
                           
-                          {visit.photos && visit.photos.length > 0 && (
-                            <div className="flex space-x-2 mt-3">
-                              {visit.photos.slice(0, 3).map((photo, index) => (
-                                <img
-                                  key={index}
-                                  src={photo}
-                                  alt={`Foto ${index + 1}`}
-                                  className="w-16 h-16 object-cover rounded-lg border"
-                                />
-                              ))}
-                              {visit.photos.length > 3 && (
-                                <div className="w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">+{visit.photos.length - 3}</span>
-                                </div>
-                              )}
+                          {/* Materials used */}
+                          {visit.materials && visit.materials.length > 0 && (
+                            <div className="mb-4">
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">Materiais utilizados:</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {visit.materials.map((material, index) => (
+                                  <div key={index} className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                                    <div className="font-medium">{material.materialType}</div>
+                                    <div className="text-xs text-gray-500">{material.quantityGrams}g</div>
+                                    {material.notes && (
+                                      <div className="text-xs text-gray-500 mt-1">{material.notes}</div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <span className="flex items-center">
+                                {getServiceIcon(visit.serviceType)}
+                                <span className="ml-1">{getServiceTypeLabel(visit.serviceType)}</span>
+                              </span>
+                              <span className="flex items-center">
+                                <Camera className="h-4 w-4 mr-1" />
+                                {visit.photos?.length || 0} fotos
+                              </span>
+                              {visit.materials && visit.materials.length > 0 && (
+                                <span className="flex items-center">
+                                  <FlaskConical className="h-4 w-4 mr-1" />
+                                  {visit.materials.length} materiais
+                                </span>
+                              )}
+                            </div>
+                            {visit.photos && visit.photos.length > 0 && (
+                              <ImageViewer 
+                                images={visit.photos} 
+                                className="text-sm"
+                              />
+                            )}
+                          </div>
                         </div>
                       ))}
                       
@@ -637,6 +694,10 @@ export default function ProviderDashboard() {
                                   {getServiceIcon(scheduledVisit.serviceType)}
                                   <span className="ml-1">{getServiceTypeLabel(scheduledVisit.serviceType)}</span>
                                 </span>
+                                <CountdownTimer 
+                                  targetDate={new Date(scheduledVisit.scheduledDate).toISOString()}
+                                  className="mt-1"
+                                />
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">

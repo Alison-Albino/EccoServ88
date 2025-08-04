@@ -97,9 +97,27 @@ export class MemStorage implements IStorage {
   private materialUsage: Map<string, MaterialUsage> = new Map();
   private waterQualityParameters: Map<string, WaterQualityParameter> = new Map();
   private scheduledVisits: Map<string, ScheduledVisit> = new Map();
+  
+  // Counters for generating sequential IDs
+  private visitCounter: number = 1;
+  private invoiceCounter: number = 1;
 
   constructor() {
     this.initializeSampleData();
+  }
+
+  private generateVisitId(): string {
+    const year = new Date().getFullYear();
+    const id = String(this.visitCounter).padStart(4, '0');
+    this.visitCounter++;
+    return `${year}/${id}`;
+  }
+
+  private generateInvoiceId(): string {
+    const year = new Date().getFullYear();
+    const id = String(this.invoiceCounter).padStart(4, '0');
+    this.invoiceCounter++;
+    return `${year}/${id}`;
   }
 
   private initializeSampleData() {
@@ -168,7 +186,7 @@ export class MemStorage implements IStorage {
 
     // Sample visit
     const visit: Visit = {
-      id: "visit-1",
+      id: "2024/0001",
       wellId: "well-1",
       providerId: "provider-profile-1",
       visitDate: "2024-01-20T14:00:00Z",
@@ -185,10 +203,10 @@ export class MemStorage implements IStorage {
 
     // Sample invoice
     const invoice: Invoice = {
-      id: "invoice-1",
+      id: "2024/0001",
       clientId: "client-profile-1", 
       providerId: "provider-profile-1",
-      visitId: "visit-1",
+      visitId: "2024/0001",
       invoiceNumber: "FAT-001-2024",
       description: "Manutenção preventiva - Poço Principal",
       totalAmount: "250.00",
@@ -199,6 +217,17 @@ export class MemStorage implements IStorage {
       paymentMethod: "pix"
     };
     this.invoices.set(invoice.id, invoice);
+
+    // Initialize counters based on existing data
+    this.visitCounter = Math.max(...Array.from(this.visits.keys()).map(id => {
+      const match = id.match(/\/(\d+)$/);
+      return match ? parseInt(match[1]) : 0;
+    }), 0) + 1;
+    
+    this.invoiceCounter = Math.max(...Array.from(this.invoices.keys()).map(id => {
+      const match = id.match(/\/(\d+)$/);
+      return match ? parseInt(match[1]) : 0;
+    }), 0) + 1;
   }
 
   // User operations
@@ -335,7 +364,7 @@ export class MemStorage implements IStorage {
   async createVisit(visitData: InsertVisit): Promise<Visit> {
     const visit: Visit = {
       ...visitData,
-      id: visitData.id || randomUUID()
+      id: visitData.id || this.generateVisitId()
     };
     this.visits.set(visit.id, visit);
     return visit;
@@ -429,7 +458,7 @@ export class MemStorage implements IStorage {
   async createInvoice(invoiceData: InsertInvoice): Promise<Invoice> {
     const invoice: Invoice = {
       ...invoiceData,
-      id: invoiceData.id || randomUUID()
+      id: invoiceData.id || this.generateInvoiceId()
     };
     this.invoices.set(invoice.id, invoice);
     return invoice;

@@ -9,9 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical } from "lucide-react";
+import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type VisitWithDetails, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
+import { type VisitWithDetails, type ScheduledVisitWithDetails, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -57,6 +57,11 @@ export default function ProviderDashboard() {
 
   const { data: visits, isLoading } = useQuery<{ visits: VisitWithDetails[] }>({
     queryKey: ['/api/providers', user?.provider?.id, 'visits'],
+    enabled: !!user?.provider?.id,
+  });
+
+  const { data: scheduledVisits, isLoading: isLoadingScheduled } = useQuery<{ scheduledVisits: ScheduledVisitWithDetails[] }>({
+    queryKey: ['/api/providers', user?.provider?.id, 'scheduled-visits'],
     enabled: !!user?.provider?.id,
   });
 
@@ -211,9 +216,10 @@ export default function ProviderDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs defaultValue="visits" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
+            <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="visits">
@@ -583,6 +589,90 @@ export default function ProviderDashboard() {
                         <div className="text-center py-12">
                           <Wrench className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <p className="text-gray-500">Nenhuma visita registrada ainda.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="scheduled">
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">Próximos Agendamentos</h2>
+                </div>
+                
+                <div className="p-6">
+                  {isLoadingScheduled ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {scheduledVisits?.scheduledVisits.map((scheduledVisit) => (
+                        <div key={scheduledVisit.id} className="border border-gray-200 rounded-lg p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-lg">
+                                {scheduledVisit.well.client.user.name} - {scheduledVisit.well.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {scheduledVisit.well.location}
+                              </p>
+                              <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                                <span className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-1" />
+                                  {format(new Date(scheduledVisit.scheduledDate), 'dd/MM/yyyy')}
+                                </span>
+                                <span className="flex items-center">
+                                  {getServiceIcon(scheduledVisit.serviceType)}
+                                  <span className="ml-1">{getServiceTypeLabel(scheduledVisit.serviceType)}</span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <Badge className={
+                                scheduledVisit.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                scheduledVisit.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                scheduledVisit.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }>
+                                {scheduledVisit.status === 'scheduled' ? 'Agendado' :
+                                 scheduledVisit.status === 'confirmed' ? 'Confirmado' :
+                                 scheduledVisit.status === 'cancelled' ? 'Cancelado' :
+                                 scheduledVisit.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {scheduledVisit.notes && (
+                            <p className="text-sm text-gray-700 mb-3">{scheduledVisit.notes}</p>
+                          )}
+                          
+                          <div className="flex justify-end space-x-2">
+                            {scheduledVisit.status === 'scheduled' && (
+                              <Button size="sm" variant="outline">
+                                <Clock className="h-4 w-4 mr-1" />
+                                Confirmar Visita
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {(!scheduledVisits?.scheduledVisits || scheduledVisits.scheduledVisits.length === 0) && (
+                        <div className="text-center py-12">
+                          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">Nenhum agendamento encontrado.</p>
                         </div>
                       )}
                     </div>

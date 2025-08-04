@@ -196,11 +196,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // If it's a periodic visit and nextVisitDate is provided, create a scheduled visit
+      if (visitData.visitType === 'periodic' && visitData.nextVisitDate) {
+        await storage.createScheduledVisit({
+          wellId: visitData.wellId,
+          providerId: visitData.providerId,
+          scheduledDate: visitData.nextVisitDate,
+          serviceType: visitData.serviceType,
+          status: 'scheduled',
+          notes: `Agendamento automático gerado pela visita ${visit.id}`,
+          createdFromVisitId: visit.id
+        });
+        console.log('Agendamento automático criado para:', visitData.nextVisitDate);
+      }
+
       res.status(201).json({ visit });
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ message: "Invalid request data", errors: error.errors });
       }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Scheduled visits routes
+  app.get("/api/scheduled-visits", async (req, res) => {
+    try {
+      const scheduledVisits = await storage.getScheduledVisitsWithDetails();
+      res.json({ scheduledVisits });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/providers/:providerId/scheduled-visits", async (req, res) => {
+    try {
+      const scheduledVisits = await storage.getScheduledVisitsByProviderId(req.params.providerId);
+      res.json({ scheduledVisits });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/clients/:clientId/scheduled-visits", async (req, res) => {
+    try {
+      const scheduledVisits = await storage.getScheduledVisitsByClientId(req.params.clientId);
+      res.json({ scheduledVisits });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/scheduled-visits/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      await storage.updateScheduledVisitStatus(req.params.id, status);
+      res.json({ message: "Status atualizado com sucesso" });
+    } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
   });

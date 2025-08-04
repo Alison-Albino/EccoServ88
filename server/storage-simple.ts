@@ -17,7 +17,10 @@ import {
   type WellWithClient, 
   type VisitWithDetails, 
   type InvoiceWithDetails,
-  type VisitWithMaterials
+  type VisitWithMaterials,
+  type ScheduledVisit,
+  type InsertScheduledVisit,
+  type ScheduledVisitWithDetails
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -72,6 +75,14 @@ export interface IStorage {
   getMaterialUsageByVisitId(visitId: string): Promise<MaterialUsage[]>;
   getVisitWithMaterials(visitId: string): Promise<VisitWithMaterials | undefined>;
   getMaterialConsumptionByPeriod(startDate: Date, endDate: Date): Promise<{ materialType: string; totalGrams: number }[]>;
+
+  // Scheduled visit operations
+  getScheduledVisit(id: string): Promise<ScheduledVisit | undefined>;
+  createScheduledVisit(scheduledVisit: InsertScheduledVisit): Promise<ScheduledVisit>;
+  getScheduledVisitsByProviderId(providerId: string): Promise<ScheduledVisit[]>;
+  getScheduledVisitsByClientId(clientId: string): Promise<ScheduledVisitWithDetails[]>;
+  getScheduledVisitsWithDetails(): Promise<ScheduledVisitWithDetails[]>;
+  updateScheduledVisitStatus(id: string, status: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -82,6 +93,7 @@ export class MemStorage implements IStorage {
   private visits: Map<string, Visit> = new Map();
   private invoices: Map<string, Invoice> = new Map();
   private materialUsage: Map<string, MaterialUsage> = new Map();
+  private scheduledVisits: Map<string, ScheduledVisit> = new Map();
 
   constructor() {
     this.initializeSampleData();
@@ -557,6 +569,97 @@ export class MemStorage implements IStorage {
       materialType,
       totalGrams
     }));
+  }
+
+  // Scheduled visit operations
+  async getScheduledVisit(id: string): Promise<ScheduledVisit | undefined> {
+    return this.scheduledVisits.get(id);
+  }
+
+  async createScheduledVisit(scheduledVisitData: InsertScheduledVisit): Promise<ScheduledVisit> {
+    const scheduledVisit: ScheduledVisit = {
+      ...scheduledVisitData,
+      id: scheduledVisitData.id || randomUUID(),
+      createdAt: new Date().toISOString()
+    };
+    this.scheduledVisits.set(scheduledVisit.id, scheduledVisit);
+    return scheduledVisit;
+  }
+
+  async getScheduledVisitsByProviderId(providerId: string): Promise<ScheduledVisit[]> {
+    return Array.from(this.scheduledVisits.values()).filter(visit => visit.providerId === providerId);
+  }
+
+  async getScheduledVisitsByClientId(clientId: string): Promise<ScheduledVisitWithDetails[]> {
+    const clientWells = Array.from(this.wells.values()).filter(well => well.clientId === clientId);
+    const wellIds = clientWells.map(well => well.id);
+    
+    return Array.from(this.scheduledVisits.values())
+      .filter(visit => wellIds.includes(visit.wellId))
+      .map(visit => {
+        const well = this.wells.get(visit.wellId);
+        const provider = this.providers.get(visit.providerId);
+        
+        let wellWithClient = null;
+        if (well) {
+          const client = this.clients.get(well.clientId);
+          const clientUser = client ? this.users.get(client.userId) : undefined;
+          if (client && clientUser) {
+            wellWithClient = { ...well, client: { ...client, user: clientUser } };
+          }
+        }
+
+        let providerWithUser = null;
+        if (provider) {
+          const providerUser = this.users.get(provider.userId);
+          if (providerUser) {
+            providerWithUser = { ...provider, user: providerUser };
+          }
+        }
+
+        return {
+          ...visit,
+          well: wellWithClient,
+          provider: providerWithUser
+        };
+      }).filter(item => item.well && item.provider) as ScheduledVisitWithDetails[];
+  }
+
+  async getScheduledVisitsWithDetails(): Promise<ScheduledVisitWithDetails[]> {
+    return Array.from(this.scheduledVisits.values()).map(visit => {
+      const well = this.wells.get(visit.wellId);
+      const provider = this.providers.get(visit.providerId);
+      
+      let wellWithClient = null;
+      if (well) {
+        const client = this.clients.get(well.clientId);
+        const clientUser = client ? this.users.get(client.userId) : undefined;
+        if (client && clientUser) {
+          wellWithClient = { ...well, client: { ...client, user: clientUser } };
+        }
+      }
+
+      let providerWithUser = null;
+      if (provider) {
+        const providerUser = this.users.get(provider.userId);
+        if (providerUser) {
+          providerWithUser = { ...provider, user: providerUser };
+        }
+      }
+
+      return {
+        ...visit,
+        well: wellWithClient,
+        provider: providerWithUser
+      };
+    }).filter(item => item.well && item.provider) as ScheduledVisitWithDetails[];
+  }
+
+  async updateScheduledVisitStatus(id: string, status: string): Promise<void> {
+    const visit = this.scheduledVisits.get(id);
+    if (visit) {
+      this.scheduledVisits.set(id, { ...visit, status });
+    }
   }
 }
 

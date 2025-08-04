@@ -53,6 +53,19 @@ export const visits = pgTable("visits", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Nova tabela para agendamentos de visitas futuras
+export const scheduledVisits = pgTable("scheduled_visits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  wellId: varchar("well_id").references(() => wells.id).notNull(),
+  providerId: varchar("provider_id").references(() => providers.id).notNull(),
+  scheduledDate: timestamp("scheduled_date").notNull(),
+  serviceType: text("service_type").notNull(),
+  status: text("status").notNull().default('scheduled'), // 'scheduled', 'confirmed', 'completed', 'cancelled'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdFromVisitId: varchar("created_from_visit_id").references(() => visits.id),
+});
+
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   visitId: varchar("visit_id").references(() => visits.id).notNull(),
@@ -109,6 +122,11 @@ export const insertVisitSchema = createInsertSchema(visits).omit({
   createdAt: true,
 });
 
+export const insertScheduledVisitSchema = createInsertSchema(scheduledVisits).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
   createdAt: true,
@@ -150,6 +168,8 @@ export type InsertProvider = z.infer<typeof insertProviderSchema>;
 export type Provider = typeof providers.$inferSelect;
 export type InsertVisit = z.infer<typeof insertVisitSchema>;
 export type Visit = typeof visits.$inferSelect;
+export type InsertScheduledVisit = z.infer<typeof insertScheduledVisitSchema>;
+export type ScheduledVisit = typeof scheduledVisits.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertMaterialUsage = z.infer<typeof insertMaterialUsageSchema>;
@@ -168,6 +188,11 @@ export type WellWithClient = Well & {
 };
 
 export type VisitWithDetails = Visit & {
+  well: WellWithClient;
+  provider: Provider & { user: User };
+};
+
+export type ScheduledVisitWithDetails = ScheduledVisit & {
   well: WellWithClient;
   provider: Provider & { user: User };
 };

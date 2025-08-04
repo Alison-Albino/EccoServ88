@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -72,6 +72,15 @@ export const invoices = pgTable("invoices", {
   sentAt: timestamp("sent_at"),
 });
 
+export const materialUsage = pgTable("material_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitId: varchar("visit_id").references(() => visits.id).notNull(),
+  materialType: text("material_type").notNull(),
+  quantityGrams: decimal("quantity_grams", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -102,6 +111,11 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
   createdAt: true,
   sentAt: true,
+});
+
+export const insertMaterialUsageSchema = createInsertSchema(materialUsage).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Login schema
@@ -136,6 +150,8 @@ export type InsertVisit = z.infer<typeof insertVisitSchema>;
 export type Visit = typeof visits.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
+export type InsertMaterialUsage = z.infer<typeof insertMaterialUsageSchema>;
+export type MaterialUsage = typeof materialUsage.$inferSelect;
 export type LoginRequest = z.infer<typeof loginSchema>;
 export type CreateInvoiceRequest = z.infer<typeof createInvoiceSchema>;
 
@@ -159,3 +175,34 @@ export type InvoiceWithDetails = Invoice & {
   client: Client & { user: User };
   provider: Provider & { user: User };
 };
+
+export type VisitWithMaterials = VisitWithDetails & {
+  materials: MaterialUsage[];
+};
+
+// Constants for available materials
+export const AVAILABLE_MATERIALS = [
+  'Cloro (livre ou total)',
+  'pH',
+  'Dureza total (Ca, Mg)',
+  'Cloretos (Cl⁻)',
+  'Sulfatos (SO₄²⁻)',
+  'Fósforo total',
+  'Ferro (Fe)',
+  'Manganês (Mn)',
+  'Nitrogênio total (amônia, nitrato, nitrito)',
+] as const;
+
+export type AvailableMaterial = typeof AVAILABLE_MATERIALS[number];
+
+// Material usage form schema
+export const materialUsageFormSchema = z.object({
+  materials: z.array(z.object({
+    type: z.string(),
+    selected: z.boolean(),
+    quantity: z.number().min(0).optional(),
+    notes: z.string().optional(),
+  })),
+});
+
+export type MaterialUsageForm = z.infer<typeof materialUsageFormSchema>;

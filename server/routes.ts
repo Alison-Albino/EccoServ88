@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-simple";
-import { loginSchema, insertVisitSchema, createInvoiceSchema } from "@shared/schema";
+import { loginSchema, insertVisitSchema, createInvoiceSchema, insertMaterialUsageSchema, AVAILABLE_MATERIALS } from "@shared/schema";
 import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
@@ -369,6 +369,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateInvoiceStatus(req.params.id, status);
       const invoice = await storage.getInvoice(req.params.id);
       res.json({ invoice, message: "Invoice status updated" });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Material usage routes
+  app.get("/api/materials", async (req, res) => {
+    try {
+      res.json({ materials: AVAILABLE_MATERIALS });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/visits/:visitId/materials", async (req, res) => {
+    try {
+      const { visitId } = req.params;
+      const { materials } = req.body;
+
+      if (!materials || !Array.isArray(materials)) {
+        return res.status(400).json({ message: "Materials array is required" });
+      }
+
+      const createdMaterials = [];
+      for (const material of materials) {
+        if (material.selected && material.quantity > 0) {
+          const materialUsage = await storage.createMaterialUsage({
+            visitId,
+            materialType: material.type,
+            quantityGrams: material.quantity.toString(),
+            notes: material.notes || null
+          });
+          createdMaterials.push(materialUsage);
+        }
+      }
+
+      res.status(201).json({ materials: createdMaterials });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/visits/:visitId/materials", async (req, res) => {
+    try {
+      const materials = await storage.getMaterialUsageByVisitId(req.params.visitId);
+      res.json({ materials });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/materials/consumption", async (req, res) => {
+    try {
+      const { period } = req.query;
+      let startDate: Date;
+      let endDate = new Date();
+
+      if (period === 'week') {
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 7);
+      } else if (period === 'month') {
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+      } else {
+        return res.status(400).json({ message: "Period must be 'week' or 'month'" });
+      }
+
+      const consumption = await storage.getMaterialConsumptionByPeriod(startDate, endDate);
+      
+      // Convert to kg and format response
+      const formattedConsumption = consumption.map(item => ({
+        materialType: item.materialType,
+        totalGrams: item.totalGrams,
+        totalKilograms: Number((item.totalGrams / 1000).toFixed(3))
+      }));
+
+      res.json({ 
+        period,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        consumption: formattedConsumption 
+      });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

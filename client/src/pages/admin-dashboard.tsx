@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, DollarSign, CheckCircle } from "lucide-react";
+import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, DollarSign, CheckCircle, FlaskConical } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { type VisitWithDetails, type WellWithClient, type InvoiceWithDetails } from "@shared/schema";
 import { format } from "date-fns";
 import { InvoiceList } from "@/components/invoice-list";
+import { MaterialConsumptionReport } from "@/components/material-consumption-report";
 
 const providerRegisterSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -214,10 +215,11 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="wells">Poços</TabsTrigger>
             <TabsTrigger value="visits">Visitas</TabsTrigger>
+            <TabsTrigger value="materials">Materiais</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
             <TabsTrigger value="providers">Prestadores</TabsTrigger>
           </TabsList>
@@ -453,6 +455,10 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="materials">
+            <MaterialConsumptionReport />
           </TabsContent>
 
           <TabsContent value="providers">

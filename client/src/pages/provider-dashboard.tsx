@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CloudUpload, Wrench, Camera, Fan, Cog, FileText, Plus, DollarSign } from "lucide-react";
+import { CloudUpload, Wrench, Camera, Fan, Cog, FileText, Plus, DollarSign, FlaskConical } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type VisitWithDetails, type InvoiceWithDetails } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoiceList } from "@/components/invoice-list";
+import { MaterialUsageForm } from "@/components/material-usage-form";
 
 interface Client {
   id: string;
@@ -174,8 +175,9 @@ export default function ProviderDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs defaultValue="visits" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
+            <TabsTrigger value="materials">Materiais</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
@@ -380,6 +382,80 @@ export default function ProviderDashboard() {
               )}
             </div>
           </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="materials">
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
+                    <Flask className="h-5 w-5" />
+                    <span>Registrar Materiais Utilizados</span>
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Selecione uma visita para registrar os materiais químicos utilizados.
+                  </p>
+                </div>
+                
+                <div className="p-6">
+                  {visits?.visits && visits.visits.length > 0 ? (
+                    <div className="space-y-4">
+                      {visits.visits
+                        .filter(visit => visit.status === 'completed')
+                        .map((visit) => (
+                        <div key={visit.id} className="border border-gray-200 rounded-lg">
+                          <div className="p-4">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">
+                                  {visit.well.client.user.name} - {visit.well.name}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • {getServiceTypeLabel(visit.serviceType)}
+                                </p>
+                              </div>
+                              {getStatusBadge(visit.status)}
+                            </div>
+                            
+                            <MaterialUsageForm 
+                              visitId={visit.id} 
+                              onSuccess={() => {
+                                toast({
+                                  title: "Materiais registrados!",
+                                  description: "Os materiais foram registrados com sucesso para esta visita.",
+                                });
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {visits.visits.filter(visit => visit.status === 'completed').length === 0 && (
+                        <div className="text-center py-12">
+                          <Flask className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            Nenhuma visita concluída
+                          </h3>
+                          <p className="text-gray-500">
+                            Complete uma visita primeiro para registrar materiais utilizados.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Flask className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Nenhuma visita registrada
+                      </h3>
+                      <p className="text-gray-500">
+                        Registre visitas primeiro para poder adicionar materiais utilizados.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </TabsContent>
 

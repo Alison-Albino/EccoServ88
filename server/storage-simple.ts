@@ -11,10 +11,13 @@ import {
   type InsertVisit, 
   type Invoice, 
   type InsertInvoice, 
+  type MaterialUsage,
+  type InsertMaterialUsage,
   type UserWithProfile, 
   type WellWithClient, 
   type VisitWithDetails, 
-  type InvoiceWithDetails
+  type InvoiceWithDetails,
+  type VisitWithMaterials
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -62,6 +65,13 @@ export interface IStorage {
   updateInvoiceStatus(id: string, status: string): Promise<void>;
   markInvoiceAsSent(id: string): Promise<void>;
   markInvoiceAsPaid(id: string, paymentMethod: string): Promise<void>;
+
+  // Material usage operations
+  getMaterialUsage(id: string): Promise<MaterialUsage | undefined>;
+  createMaterialUsage(materialUsage: InsertMaterialUsage): Promise<MaterialUsage>;
+  getMaterialUsageByVisitId(visitId: string): Promise<MaterialUsage[]>;
+  getVisitWithMaterials(visitId: string): Promise<VisitWithMaterials | undefined>;
+  getMaterialConsumptionByPeriod(startDate: Date, endDate: Date): Promise<{ materialType: string; totalGrams: number }[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -71,6 +81,7 @@ export class MemStorage implements IStorage {
   private providers: Map<string, Provider> = new Map();
   private visits: Map<string, Visit> = new Map();
   private invoices: Map<string, Invoice> = new Map();
+  private materialUsage: Map<string, MaterialUsage> = new Map();
 
   constructor() {
     this.initializeSampleData();
@@ -469,6 +480,71 @@ export class MemStorage implements IStorage {
         paymentMethod 
       });
     }
+  }
+
+  // Material usage operations
+  async getMaterialUsage(id: string): Promise<MaterialUsage | undefined> {
+    return this.materialUsage.get(id);
+  }
+
+  async createMaterialUsage(materialUsage: InsertMaterialUsage): Promise<MaterialUsage> {
+    const id = randomUUID();
+    const newMaterialUsage: MaterialUsage = {
+      ...materialUsage,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.materialUsage.set(id, newMaterialUsage);
+    return newMaterialUsage;
+  }
+
+  async getMaterialUsageByVisitId(visitId: string): Promise<MaterialUsage[]> {
+    return Array.from(this.materialUsage.values())
+      .filter(material => material.visitId === visitId);
+  }
+
+  async getVisitWithMaterials(visitId: string): Promise<VisitWithMaterials | undefined> {
+    const visit = this.visits.get(visitId);
+    if (!visit) return undefined;
+
+    const well = this.wells.get(visit.wellId);
+    if (!well) return undefined;
+
+    const client = this.clients.get(well.clientId);
+    const provider = this.providers.get(visit.providerId);
+    
+    const clientUser = client ? this.users.get(client.userId) : undefined;
+    const providerUser = provider ? this.users.get(provider.userId) : undefined;
+    
+    if (!client || !provider || !clientUser || !providerUser) {
+      return undefined;
+    }
+
+    const materials = await this.getMaterialUsageByVisitId(visitId);
+
+    return {
+      ...visit,
+      well: { ...well, client: { ...client, user: clientUser } },
+      provider: { ...provider, user: providerUser },
+      materials
+    };
+  }
+
+  async getMaterialConsumptionByPeriod(startDate: Date, endDate: Date): Promise<{ materialType: string; totalGrams: number }[]> {
+    const consumption = new Map<string, number>();
+    
+    for (const material of this.materialUsage.values()) {
+      const materialDate = new Date(material.createdAt);
+      if (materialDate >= startDate && materialDate <= endDate) {
+        const current = consumption.get(material.materialType) || 0;
+        consumption.set(material.materialType, current + Number(material.quantityGrams));
+      }
+    }
+    
+    return Array.from(consumption.entries()).map(([materialType, totalGrams]) => ({
+      materialType,
+      totalGrams
+    }));
   }
 }
 

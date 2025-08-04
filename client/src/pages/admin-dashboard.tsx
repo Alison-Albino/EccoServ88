@@ -767,7 +767,7 @@ export default function AdminDashboard() {
                                 <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
                                   <span>• {item.visitCount} visitas</span>
                                   <span>• Média: {item.averagePerVisit}g por visita</span>
-                                  <span>• Total: {item.totalGrams.toLocaleString()}g</span>
+                                  <span>• Total: {item.totalGrams?.toLocaleString() || 0}g</span>
                                 </div>
                               </div>
                               <div className="text-right">

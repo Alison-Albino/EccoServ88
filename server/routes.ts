@@ -489,6 +489,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get wells for specific client
+  app.get("/api/clients/:clientId/wells", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const wells = await storage.getWellsByClientId(clientId);
+      res.json({ wells });
+    } catch (error) {
+      console.error('Get client wells error:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create new well
+  app.post("/api/wells", async (req, res) => {
+    try {
+      const wellData = req.body;
+      const well = await storage.createWell(wellData);
+      res.status(201).json(well);
+    } catch (error) {
+      console.error('Create well error:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Invoice routes
   app.post("/api/invoices", async (req, res) => {
     try {

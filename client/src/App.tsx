@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import IndexPage from "@/pages/index";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import ClientDashboard from "@/pages/client-dashboard";
+import ClientDashboard from "@/pages/client-dashboard-fixed";
 import ProviderDashboard from "@/pages/provider-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import NotFound from "@/pages/not-found";

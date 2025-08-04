@@ -86,19 +86,13 @@ export default function AdminDashboard() {
       };
 
       // Register user
-      const userResponse = await apiRequest('/api/register', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
+      const userResponse = await apiRequest('/api/register', 'POST', userData);
 
       // Create provider profile
-      await apiRequest('/api/providers', {
-        method: 'POST',
-        body: JSON.stringify({
-          userId: userResponse.id,
-          specialties: data.specialties.split(',').map(s => s.trim()),
-          phone: data.phone,
-        }),
+      await apiRequest('/api/providers', 'POST', {
+        userId: userResponse.id,
+        specialties: data.specialties.split(',').map(s => s.trim()),
+        phone: data.phone,
       });
 
       return userResponse;
@@ -115,7 +109,7 @@ export default function AdminDashboard() {
       toast({
         title: "Erro no cadastro",
         description: error.message || "Ocorreu um erro ao cadastrar o prestador.",
-        variant: "destructive",
+        variant: "error",
       });
     },
   });
@@ -244,17 +238,18 @@ export default function AdminDashboard() {
             title="Poços com Problemas"
             value={problemWells}
             icon={AlertTriangle}
-            variant="destructive"
+            variant="error"
           />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="visits">Visitas Completas</TabsTrigger>
             <TabsTrigger value="wells">Status dos Poços</TabsTrigger>
             <TabsTrigger value="materials">Materiais Utilizados</TabsTrigger>
             <TabsTrigger value="providers">Prestadores</TabsTrigger>
+            <TabsTrigger value="register">Cadastrar Prestador</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -453,7 +448,7 @@ export default function AdminDashboard() {
                               Cliente: {well.client.user.name} • Localização: {well.location}
                             </p>
                             <p className="text-sm text-gray-600">
-                              Tipo: {well.wellType} • Profundidade: {well.depth}m
+                              Tipo: {well.type || 'N/A'} • Profundidade: {well.depth || 'N/A'}m
                             </p>
                           </div>
                           <div className="flex items-center space-x-3">
@@ -463,9 +458,7 @@ export default function AdminDashboard() {
                         
                         <div className="text-sm text-gray-600">
                           <p><strong>Última Manutenção:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy') : 'Nunca'}</p>
-                          {well.lastMaintenanceDate && (
-                            <p><strong>Próxima Manutenção:</strong> {format(new Date(well.lastMaintenanceDate), 'dd/MM/yyyy')}</p>
-                          )}
+                          <p><strong>Status:</strong> {well.status}</p>
                         </div>
                       </div>
                     );
@@ -487,6 +480,24 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="providers">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Prestadores Cadastrados</h2>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  {/* Lista de prestadores seria implementada aqui */}
+                  <div className="text-center py-12">
+                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Lista de prestadores em desenvolvimento.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="register">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">

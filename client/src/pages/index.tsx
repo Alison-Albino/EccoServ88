@@ -168,7 +168,7 @@ export default function Home() {
                     <option>Instalação Nova</option>
                     <option>Inspeção Técnica</option>
                   </select>
-                  <Button className="w-full bg-white text-blue-600 hover:bg-gray-50 hover:text-blue-700 font-semibold">
+                  <Button className="w-full bg-white text-[#1c75c5] hover:bg-gray-50 hover:text-blue-700 font-semibold">
                     Solicitar Orçamento Gratuito
                   </Button>
                 </div>

@@ -18,9 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import Navbar from "@/components/Navbar";
-import StatsCard from "@/components/StatsCard";
-
 export default function ClientDashboard() {
   const [visitFilters, setVisitFilters] = useState({
     searchQuery: "",
@@ -51,8 +48,6 @@ export default function ClientDashboard() {
     queryKey: ["/api/clients", user?.client?.id, "wells"],
     enabled: !!user?.client?.id,
   });
-
-
 
   // Filter visits based on search criteria
   const filteredVisits = useMemo(() => {
@@ -111,7 +106,19 @@ export default function ClientDashboard() {
   if (isLoading || isLoadingScheduled) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
+        <nav className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex items-center">
+                <h1 className="text-xl font-bold text-gray-900">EccoServ</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-700">{user?.name}</span>
+                <Button variant="outline" size="sm">Sair</Button>
+              </div>
+            </div>
+          </div>
+        </nav>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -121,8 +128,6 @@ export default function ClientDashboard() {
       </div>
     );
   }
-
-
 
   // Extract unique wells from visits or use wells from API
   const activeWells = wells?.wells || visits?.visits?.reduce((acc: any[], visit: any) => {
@@ -135,13 +140,48 @@ export default function ClientDashboard() {
   const totalVisits = visits?.visits?.length || 0;
   const completedVisits = visits?.visits?.filter((v: any) => v.status === 'completed').length || 0;
   const scheduledVisitsCount = scheduledVisits?.scheduledVisits?.length || 0;
-  const lastVisit = visits?.visits
-    ?.filter((v: any) => v.status === 'completed')
-    .sort((a: any, b: any) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime())[0];
+
+  // Stats Card Component
+  const StatsCard = ({ title, value, icon: Icon, variant }: any) => {
+    const variantClasses = {
+      primary: "bg-blue-500 text-white",
+      success: "bg-green-500 text-white",
+      warning: "bg-yellow-500 text-white",
+      danger: "bg-red-500 text-white",
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-3xl font-bold text-gray-900">{value}</p>
+          </div>
+          <div className={`p-3 rounded-full ${variantClasses[variant]}`}>
+            <Icon className="h-6 w-6" />
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      {/* Navbar */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-gray-900">EccoServ</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-700">{user?.name}</span>
+              <span className="text-xs text-gray-500 capitalize">({user?.userType})</span>
+              <Button variant="outline" size="sm">Sair</Button>
+            </div>
+          </div>
+        </div>
+      </nav>
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Header */}

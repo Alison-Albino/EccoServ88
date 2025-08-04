@@ -734,18 +734,21 @@ export default function ProviderDashboard() {
                 <div className="p-6">
                   {/* Search and Filter Controls */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Buscar por ID, cliente, poço ou observações..."
-                        value={visitFilters.searchQuery}
-                        onChange={(e) => setVisitFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-                        className="pl-10"
-                      />
+                    <div className="relative flex flex-col">
+                      <Label className="text-sm text-gray-600 mb-1">Buscar</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          placeholder="ID, cliente, poço ou observações..."
+                          value={visitFilters.searchQuery}
+                          onChange={(e) => setVisitFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
+                          className="pl-10"
+                        />
+                      </div>
                     </div>
                     
-                    <div>
-                      <Label className="text-sm text-gray-600">Data início</Label>
+                    <div className="flex flex-col">
+                      <Label className="text-sm text-gray-600 mb-1">Data início</Label>
                       <Input
                         type="date"
                         value={visitFilters.startDate}
@@ -753,8 +756,8 @@ export default function ProviderDashboard() {
                       />
                     </div>
                     
-                    <div>
-                      <Label className="text-sm text-gray-600">Data fim</Label>
+                    <div className="flex flex-col">
+                      <Label className="text-sm text-gray-600 mb-1">Data fim</Label>
                       <Input
                         type="date"
                         value={visitFilters.endDate}

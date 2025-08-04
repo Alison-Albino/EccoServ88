@@ -6,6 +6,7 @@ import { ZodError } from "zod";
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
+import express from "express";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -23,6 +24,9 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve uploaded files
+  app.use('/uploads', express.static('uploads'));
+
   // Registration
   app.post('/api/register', async (req, res) => {
     try {

@@ -49,7 +49,7 @@ export default function AdminDashboard() {
     searchQuery: "",
     startDate: "",
     endDate: "",
-    status: "",
+    status: "all",
     wellId: "",
   });
 
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
       visit.provider.user.name.toLowerCase().includes(visitFilters.searchQuery.toLowerCase()) ||
       visit.observations.toLowerCase().includes(visitFilters.searchQuery.toLowerCase());
     
-    const matchesStatus = !visitFilters.status || visit.status === visitFilters.status;
+    const matchesStatus = !visitFilters.status || visitFilters.status === 'all' || visit.status === visitFilters.status;
     const matchesWell = !visitFilters.wellId || visit.wellId === visitFilters.wellId;
     
     const matchesDate = (!visitFilters.startDate || new Date(visit.visitDate) >= new Date(visitFilters.startDate)) &&
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         <SelectItem value="completed">Concluído</SelectItem>
                         <SelectItem value="pending">Pendente</SelectItem>
                         <SelectItem value="in_progress">Em Andamento</SelectItem>

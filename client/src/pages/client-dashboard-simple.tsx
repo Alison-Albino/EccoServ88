@@ -104,6 +104,26 @@ export default function ClientDashboard() {
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
 
+  const getServiceTypeLabel = (serviceType: string) => {
+    const labels = {
+      'manutencao-preventiva': 'Manutenção Preventiva',
+      'manutencao-corretiva': 'Manutenção Corretiva',
+      'limpeza': 'Limpeza',
+      'instalacao': 'Instalação',
+      'reparo': 'Reparo',
+      'inspecao': 'Inspeção',
+    };
+    return labels[serviceType as keyof typeof labels] || serviceType;
+  };
+
+  const getVisitTypeLabel = (visitType: string) => {
+    const labels = {
+      'unique': 'Visita Única',
+      'periodic': 'Visita Periódica',
+    };
+    return labels[visitType as keyof typeof labels] || visitType;
+  };
+
   if (isLoading || isLoadingScheduled) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -352,18 +372,18 @@ export default function ClientDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                           <div>
                             <h4 className="font-medium text-gray-900 mb-2">Informações da Visita</h4>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Tipo de Serviço:</span>
-                                <span className="capitalize">{visit.serviceType}</span>
+                            <div className="space-y-2 text-sm">
+                              <div className="grid grid-cols-3 gap-2">
+                                <span className="text-gray-600 font-medium">Tipo de Serviço:</span>
+                                <span className="col-span-2">{getServiceTypeLabel(visit.serviceType)}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Tipo de Visita:</span>
-                                <span className="capitalize">{visit.visitType}</span>
+                              <div className="grid grid-cols-3 gap-2">
+                                <span className="text-gray-600 font-medium">Tipo de Visita:</span>
+                                <span className="col-span-2">{getVisitTypeLabel(visit.visitType)}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Prestador:</span>
-                                <span>{visit.provider?.user?.name || 'N/A'}</span>
+                              <div className="grid grid-cols-3 gap-2">
+                                <span className="text-gray-600 font-medium">Prestador:</span>
+                                <span className="col-span-2">{visit.provider?.user?.name || 'N/A'}</span>
                               </div>
                             </div>
                           </div>
@@ -436,14 +456,14 @@ export default function ClientDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h4 className="font-medium text-gray-900 mb-2">Detalhes do Agendamento</h4>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Tipo de Serviço:</span>
-                                <span className="capitalize">{scheduled.serviceType}</span>
+                            <div className="space-y-2 text-sm">
+                              <div className="grid grid-cols-3 gap-2">
+                                <span className="text-gray-600 font-medium">Tipo de Serviço:</span>
+                                <span className="col-span-2">{getServiceTypeLabel(scheduled.serviceType)}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Prestador:</span>
-                                <span>{scheduled.provider?.user?.name || 'N/A'}</span>
+                              <div className="grid grid-cols-3 gap-2">
+                                <span className="text-gray-600 font-medium">Prestador:</span>
+                                <span className="col-span-2">{scheduled.provider?.user?.name || 'N/A'}</span>
                               </div>
                             </div>
                           </div>

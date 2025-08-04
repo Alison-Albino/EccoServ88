@@ -44,6 +44,8 @@ export const visits = pgTable("visits", {
   providerId: varchar("provider_id").references(() => providers.id).notNull(),
   visitDate: timestamp("visit_date").notNull(),
   serviceType: text("service_type").notNull(),
+  visitType: text("visit_type").notNull(), // 'unique' ou 'periodic'
+  nextVisitDate: timestamp("next_visit_date"),
   observations: text("observations").notNull(),
   status: text("status").notNull().default('pending'), // 'pending', 'completed', 'in_progress', 'cancelled'
   photos: text("photos").array().default([]),

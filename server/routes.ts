@@ -36,12 +36,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create user
       const user = await storage.createUser({
-        id: randomUUID(),
         name,
         email,
         password, // In production, hash the password
-        userType,
-        createdAt: new Date().toISOString()
+        userType
       });
 
       res.json({ id: user.id, name: user.name, email: user.email, userType: user.userType });
@@ -90,7 +88,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId, address, phone } = req.body;
       
       const client = await storage.createClient({
-        id: randomUUID(),
         userId,
         address,
         phone
@@ -109,7 +106,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId, specialties, phone } = req.body;
       
       const provider = await storage.createProvider({
-        id: randomUUID(),
         userId,
         specialties,
         phone
@@ -166,10 +162,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const visitData = insertVisitSchema.parse({
         ...req.body,
         visitDate: new Date(req.body.visitDate),
+        nextVisitDate: req.body.nextVisitDate ? new Date(req.body.nextVisitDate) : null,
         photos: req.files ? (req.files as Express.Multer.File[]).map(file => file.filename) : []
       });
 
       const visit = await storage.createVisit(visitData);
+
+      // Handle materials if provided
+      if (req.body.materials) {
+        try {
+          const materials = JSON.parse(req.body.materials);
+          for (const material of materials) {
+            await storage.createMaterialUsage({
+              visitId: visit.id,
+              materialType: material.type,
+              quantityGrams: material.quantity,
+              notes: null
+            });
+          }
+        } catch (materialError) {
+          console.error("Error saving materials:", materialError);
+        }
+      }
+
       res.status(201).json({ visit });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -285,6 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         visitId: invoiceData.visitId,
         clientId: well.clientId,
         providerId: visit.providerId,
+        invoiceNumber: `FAT-${Date.now()}`,
         description: invoiceData.description,
         serviceValue: invoiceData.serviceValue,
         materialCosts: invoiceData.materialCosts || '0.00',

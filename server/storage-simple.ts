@@ -157,9 +157,14 @@ export class MemStorage implements IStorage {
       wellId: "well-1",
       providerId: "provider-profile-1",
       visitDate: "2024-01-20T14:00:00Z",
+      serviceType: "manutencao-preventiva",
+      visitType: "periodic",
+      nextVisitDate: "2024-04-20T14:00:00Z",
       observations: "Manutenção preventiva realizada. Sistema funcionando perfeitamente.",
       status: "completed",
-      photoUrl: null
+      photos: [],
+      invoiceUrl: null,
+      createdAt: "2024-01-20T14:00:00Z"
     };
     this.visits.set(visit.id, visit);
 

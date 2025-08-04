@@ -11,13 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CloudUpload, Wrench, Camera, Fan, Cog, FileText, Plus, DollarSign, FlaskConical } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type VisitWithDetails, type InvoiceWithDetails } from "@shared/schema";
+import { type VisitWithDetails, type InvoiceWithDetails, AVAILABLE_MATERIALS, type AvailableMaterial } from "@shared/schema";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoiceList } from "@/components/invoice-list";
-import { MaterialUsageForm } from "@/components/material-usage-form";
+
 
 interface Client {
   id: string;
@@ -41,7 +42,10 @@ export default function ProviderDashboard() {
     clientId: "",
     wellId: "",
     serviceType: "",
+    visitType: "", // 'periodic' ou 'unique'
+    nextVisitDate: "",
     observations: "",
+    materials: [] as Array<{ type: AvailableMaterial; quantity: number }>,
   });
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedVisitForInvoice, setSelectedVisitForInvoice] = useState<VisitWithDetails | null>(null);
@@ -79,7 +83,10 @@ export default function ProviderDashboard() {
         clientId: "",
         wellId: "",
         serviceType: "",
+        visitType: "",
+        nextVisitDate: "",
         observations: "",
+        materials: [],
       });
       setPhotos([]);
       queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'visits'] });
@@ -103,8 +110,11 @@ export default function ProviderDashboard() {
     formData.append('providerId', user.provider.id);
     formData.append('visitDate', visitForm.visitDate);
     formData.append('serviceType', visitForm.serviceType);
+    formData.append('visitType', visitForm.visitType);
+    formData.append('nextVisitDate', visitForm.nextVisitDate);
     formData.append('observations', visitForm.observations);
     formData.append('status', 'completed');
+    formData.append('materials', JSON.stringify(visitForm.materials));
 
     photos.forEach((photo) => {
       formData.append('photos', photo);
@@ -175,9 +185,8 @@ export default function ProviderDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs defaultValue="visits" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
-            <TabsTrigger value="materials">Materiais</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
@@ -263,6 +272,90 @@ export default function ProviderDashboard() {
                 </Select>
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="visitType">Tipo de Visita *</Label>
+                  <Select
+                    value={visitForm.visitType}
+                    onValueChange={(value) => setVisitForm({ ...visitForm, visitType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unique">Visita Única</SelectItem>
+                      <SelectItem value="periodic">Visita Periódica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {visitForm.visitType === 'periodic' && (
+                  <div>
+                    <Label htmlFor="nextVisitDate">Data da Próxima Visita</Label>
+                    <Input
+                      id="nextVisitDate"
+                      type="date"
+                      value={visitForm.nextVisitDate}
+                      onChange={(e) => setVisitForm({ ...visitForm, nextVisitDate: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <Label>Materiais Utilizados</Label>
+                <div className="mt-2 space-y-3 border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-3">Marque os materiais químicos utilizados nesta visita:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {AVAILABLE_MATERIALS.map((material) => (
+                      <div key={material} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={material}
+                          checked={visitForm.materials.some((m) => m.type === material)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setVisitForm({
+                                ...visitForm,
+                                materials: [...visitForm.materials, { type: material, quantity: 0 }]
+                              });
+                            } else {
+                              setVisitForm({
+                                ...visitForm,
+                                materials: visitForm.materials.filter((m) => m.type !== material)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={material} className="text-sm font-normal">
+                          {material}
+                        </Label>
+                        {visitForm.materials.some((m) => m.type === material) && (
+                          <div className="flex items-center space-x-1 ml-2">
+                            <Input
+                              type="number"
+                              placeholder="Quantidade (g)"
+                              className="w-20 h-8 text-xs"
+                              min="0"
+                              step="0.1"
+                              value={visitForm.materials.find((m) => m.type === material)?.quantity || ''}
+                              onChange={(e) => {
+                                const newMaterials = visitForm.materials.map((m) =>
+                                  m.type === material
+                                    ? { ...m, quantity: parseFloat(e.target.value) || 0 }
+                                    : m
+                                );
+                                setVisitForm({ ...visitForm, materials: newMaterials });
+                              }}
+                            />
+                            <span className="text-xs text-gray-500">g</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
               <div>
                 <Label htmlFor="observations">Observações *</Label>
                 <Textarea
@@ -318,7 +411,10 @@ export default function ProviderDashboard() {
                       clientId: "",
                       wellId: "",
                       serviceType: "",
+                      visitType: "",
+                      nextVisitDate: "",
                       observations: "",
+                      materials: [],
                     });
                     setPhotos([]);
                   }}
@@ -385,79 +481,6 @@ export default function ProviderDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="materials">
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-                    <FlaskConical className="h-5 w-5" />
-                    <span>Registrar Materiais Utilizados</span>
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Selecione uma visita para registrar os materiais químicos utilizados.
-                  </p>
-                </div>
-                
-                <div className="p-6">
-                  {visits?.visits && visits.visits.length > 0 ? (
-                    <div className="space-y-4">
-                      {visits.visits
-                        .filter(visit => visit.status === 'completed')
-                        .map((visit) => (
-                        <div key={visit.id} className="border border-gray-200 rounded-lg">
-                          <div className="p-4">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h4 className="font-semibold text-gray-900">
-                                  {visit.well.client.user.name} - {visit.well.name}
-                                </h4>
-                                <p className="text-sm text-gray-600">
-                                  {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • {getServiceTypeLabel(visit.serviceType)}
-                                </p>
-                              </div>
-                              {getStatusBadge(visit.status)}
-                            </div>
-                            
-                            <MaterialUsageForm 
-                              visitId={visit.id} 
-                              onSuccess={() => {
-                                toast({
-                                  title: "Materiais registrados!",
-                                  description: "Os materiais foram registrados com sucesso para esta visita.",
-                                });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {visits.visits.filter(visit => visit.status === 'completed').length === 0 && (
-                        <div className="text-center py-12">
-                          <FlaskConical className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Nenhuma visita concluída
-                          </h3>
-                          <p className="text-gray-500">
-                            Complete uma visita primeiro para registrar materiais utilizados.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <FlaskConical className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Nenhuma visita registrada
-                      </h3>
-                      <p className="text-gray-500">
-                        Registre visitas primeiro para poder adicionar materiais utilizados.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
 
           <TabsContent value="my-visits">
             <div className="space-y-6">

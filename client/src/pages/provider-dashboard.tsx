@@ -433,7 +433,7 @@ export default function ProviderDashboard() {
                       
                       {visits.visits.filter(visit => visit.status === 'completed').length === 0 && (
                         <div className="text-center py-12">
-                          <Flask className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <FlaskConical className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <h3 className="text-lg font-medium text-gray-900 mb-2">
                             Nenhuma visita concluída
                           </h3>
@@ -445,7 +445,7 @@ export default function ProviderDashboard() {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <Flask className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <FlaskConical className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
                         Nenhuma visita registrada
                       </h3>
@@ -505,10 +505,10 @@ export default function ProviderDashboard() {
                               <Button
                                 size="sm"
                                 onClick={() => handleCreateInvoice(visit)}
-                                disabled={visit.hasInvoice}
+                                disabled={visit.status !== 'completed'}
                               >
                                 <FileText className="h-4 w-4 mr-1" />
-                                {visit.hasInvoice ? 'Faturado' : 'Criar Fatura'}
+                                {visit.status === 'completed' ? 'Criar Fatura' : 'Visita Pendente'}
                               </Button>
                             </div>
                           </div>

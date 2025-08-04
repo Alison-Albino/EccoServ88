@@ -200,6 +200,32 @@ export default function AdminDashboard() {
     }
   };
 
+  // Reset client password mutation
+  const resetClientPasswordMutation = useMutation({
+    mutationFn: async (clientId: string) => {
+      await apiRequest('POST', `/api/admin/clients/${clientId}/reset-password`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Senha resetada!",
+        description: "A senha do cliente foi alterada para '12345'.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao resetar senha",
+        description: error.message || "Não foi possível resetar a senha do cliente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetClientPassword = (clientId: string, clientName: string) => {
+    if (confirm(`Tem certeza que deseja resetar a senha de ${clientName} para '12345'?`)) {
+      resetClientPasswordMutation.mutate(clientId);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants = {
       active: { label: "Ativo", className: "bg-success/10 text-success" },
@@ -678,6 +704,15 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => resetClientPassword(client.id, client.user.name)}
+                                className="text-xs px-3 py-1 h-7"
+                              >
+                                <Key className="h-3 w-3 mr-1" />
+                                Resetar Senha
+                              </Button>
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 Ativo
                               </span>

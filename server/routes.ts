@@ -413,6 +413,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset client password
+  app.post("/api/admin/clients/:clientId/reset-password", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // Get client to find associated user
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+
+      // Reset user password to "12345"
+      await storage.updateUserPassword(client.userId, "12345");
+
+      res.json({ message: "Senha do cliente resetada para '12345'" });
+    } catch (error) {
+      console.error('Reset client password error:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Reset provider password
   app.put("/api/admin/providers/:providerId/reset-password", async (req, res) => {
     try {

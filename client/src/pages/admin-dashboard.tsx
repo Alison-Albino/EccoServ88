@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ImageViewer } from "@/components/image-viewer";
-import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity, Trash2, Key } from "lucide-react";
+import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity, Trash2, Key, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +38,7 @@ interface AdminStats {
   totalProviders: number;
   totalWells: number;
   monthlyVisits: number;
+  scheduledVisits?: number;
 }
 
 export default function AdminDashboard() {
@@ -78,6 +79,14 @@ export default function AdminDashboard() {
 
   const { data: providers } = useQuery<{ providers: any[] }>({
     queryKey: ['/api/admin/providers'],
+  });
+
+  const { data: scheduledVisits } = useQuery<{ scheduledVisits: any[] }>({
+    queryKey: ['/api/admin/scheduled-visits'],
+  });
+
+  const { data: materialConsumption } = useQuery<{ consumption: any[] }>({
+    queryKey: ['/api/admin/materials/all-consumption'],
   });
 
   const registerProviderMutation = useMutation({
@@ -248,6 +257,7 @@ export default function AdminDashboard() {
   const inProgressVisits = visits?.visits.filter(v => v.status === 'in_progress').length || 0;
   const activeWells = wells?.wells.filter(w => w.status === 'active').length || 0;
   const problemWells = wells?.wells.filter(w => w.status === 'problem').length || 0;
+  const totalScheduled = scheduledVisits?.scheduledVisits?.length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -261,7 +271,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <StatsCard
             title="Total de Clientes"
             value={stats?.totalClients || 0}
@@ -287,9 +297,9 @@ export default function AdminDashboard() {
             variant="success"
           />
           <StatsCard
-            title="Visitas Pendentes"
-            value={pendingVisits}
-            icon={Clock}
+            title="Agendamentos"
+            value={totalScheduled}
+            icon={Calendar}
             variant="warning"
           />
           <StatsCard
@@ -301,9 +311,10 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="visits">Visitas Completas</TabsTrigger>
+            <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
             <TabsTrigger value="wells">Status dos Poços</TabsTrigger>
             <TabsTrigger value="materials">Materiais Utilizados</TabsTrigger>
             <TabsTrigger value="providers">Prestadores</TabsTrigger>
@@ -533,8 +544,108 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          <TabsContent value="scheduled">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Agendamentos Futuros</h2>
+                  <div className="text-sm text-gray-500">
+                    Total: {scheduledVisits?.scheduledVisits?.length || 0} agendamentos
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  {scheduledVisits?.scheduledVisits && scheduledVisits.scheduledVisits.length > 0 ? (
+                    scheduledVisits.scheduledVisits.map((scheduled) => (
+                      <div key={scheduled.id} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-lg">
+                              {scheduled.well?.name || 'Poço sem nome'}
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Cliente: {scheduled.well?.client?.user?.name || 'N/A'} • 
+                              Prestador: {scheduled.provider?.user?.name || 'N/A'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              <strong>Data:</strong> {format(new Date(scheduled.scheduledDate), 'dd/MM/yyyy')} • 
+                              <strong>Tipo:</strong> {scheduled.visitType}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Agendado
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 text-sm text-gray-600">
+                          <p><strong>Localização:</strong> {scheduled.well?.location || 'N/A'}</p>
+                          <p><strong>Status do Poço:</strong> {scheduled.well?.status || 'N/A'}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">
+                        {scheduledVisits ? 'Nenhum agendamento futuro.' : 'Carregando agendamentos...'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="materials">
-            <MaterialConsumptionReport />
+            <div className="space-y-6">
+              <MaterialConsumptionReport />
+              
+              {/* Gráfico de Consumo Total de Materiais */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">Consumo Total de Materiais</h2>
+                </div>
+                
+                <div className="p-6">
+                  {materialConsumption?.consumption && materialConsumption.consumption.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {materialConsumption.consumption.map((item, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <h4 className="font-semibold text-gray-900 mb-2">{item.materialType}</h4>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              <strong>Total:</strong> {item.totalQuantity} g
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              <strong>Em Kg:</strong> {item.totalKilograms} kg
+                            </p>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full" 
+                                style={{ 
+                                  width: `${Math.min((item.totalQuantity / Math.max(...(materialConsumption.consumption.map(c => c.totalQuantity) || [1]))) * 100, 100)}%` 
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">
+                        {materialConsumption ? 'Nenhum material foi consumido ainda.' : 'Carregando dados de consumo...'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="providers">

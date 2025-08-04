@@ -413,6 +413,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/scheduled-visits", async (req, res) => {
+    try {
+      const scheduledVisits = await storage.getScheduledVisitsWithDetails();
+      res.json({ scheduledVisits });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/materials/all-consumption", async (req, res) => {
+    try {
+      // Get all material usage from visits
+      const visits = await storage.getVisitsWithDetails();
+      const materialTotals: Record<string, number> = {};
+      
+      for (const visit of visits) {
+        const materials = await storage.getMaterialUsageByVisitId(visit.id);
+        for (const material of materials) {
+          const key = material.materialType;
+          materialTotals[key] = (materialTotals[key] || 0) + material.quantity;
+        }
+      }
+
+      const consumption = Object.entries(materialTotals).map(([materialType, totalQuantity]) => ({
+        materialType,
+        totalQuantity,
+        totalKilograms: Number((totalQuantity / 1000).toFixed(3))
+      }));
+
+      res.json({ consumption });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get all clients and wells for dropdowns
   app.get("/api/clients", async (req, res) => {
     try {

@@ -285,7 +285,7 @@ export default function Home() {
               <Phone className="mr-2 h-5 w-5" />
               Ligar Agora: (11) 9999-9999
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8">
+            <Button size="lg" variant="outline" className="border-white hover:bg-white hover:text-blue-600 text-lg px-8 text-[#1c75c5]">
               <Mail className="mr-2 h-5 w-5" />
               Solicitar Orçamento
             </Button>

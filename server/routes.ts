@@ -499,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (!materialTotals[key]) {
               materialTotals[key] = { totalGrams: 0, visitCount: 0, dates: [] };
             }
-            materialTotals[key].totalGrams += material.quantity;
+            materialTotals[key].totalGrams += Number(material.quantityGrams) || 0;
             materialTotals[key].visitCount += 1;
             if (!materialTotals[key].dates.includes(visitDate)) {
               materialTotals[key].dates.push(visitDate);

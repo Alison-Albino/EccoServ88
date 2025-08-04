@@ -76,6 +76,10 @@ export default function AdminDashboard() {
     queryKey: ['/api/admin/wells'],
   });
 
+  const { data: providers } = useQuery<{ providers: any[] }>({
+    queryKey: ['/api/admin/providers'],
+  });
+
   const registerProviderMutation = useMutation({
     mutationFn: async (data: ProviderRegisterForm) => {
       const userData = {
@@ -105,6 +109,7 @@ export default function AdminDashboard() {
       });
       providerForm.reset();
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/providers'] });
     },
     onError: (error: any) => {
       toast({
@@ -483,16 +488,52 @@ export default function AdminDashboard() {
           <TabsContent value="providers">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Prestadores Cadastrados</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Prestadores Cadastrados</h2>
+                  <div className="text-sm text-gray-500">
+                    Total: {providers?.providers?.length || 0} prestadores
+                  </div>
+                </div>
               </div>
               
               <div className="p-6">
                 <div className="space-y-4">
-                  {/* Lista de prestadores seria implementada aqui */}
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Lista de prestadores em desenvolvimento.</p>
-                  </div>
+                  {providers?.providers && providers.providers.length > 0 ? (
+                    providers.providers.map((provider) => (
+                      <div key={provider.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-lg">{provider.user.name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Email: {provider.user.email} • Telefone: {provider.phone || 'Não informado'}
+                            </p>
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-700">
+                                <strong>Especialidades:</strong> {provider.specialties?.join(', ') || 'Não informado'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Ativo
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 text-sm text-gray-600">
+                          <p><strong>ID do Prestador:</strong> {provider.id}</p>
+                          <p><strong>Cadastrado em:</strong> {provider.user.userType}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">
+                        {providers ? 'Nenhum prestador cadastrado ainda.' : 'Carregando prestadores...'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

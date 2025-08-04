@@ -157,6 +157,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/clients/:clientId/scheduled-visits", async (req, res) => {
+    try {
+      const scheduledVisits = await storage.getScheduledVisitsByClientId(req.params.clientId);
+      res.json({ scheduledVisits });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Provider routes
   app.get("/api/providers/:providerId/visits", async (req, res) => {
     try {

@@ -33,13 +33,13 @@ export default function ClientDashboard() {
 
   // Get visits for this client
   const { data: visits, isLoading } = useQuery<any>({
-    queryKey: ["/api/visits/client", user?.client?.id],
+    queryKey: ["/api/clients", user?.client?.id, "visits"],
     enabled: !!user?.client?.id,
   });
 
   // Get scheduled visits for this client
   const { data: scheduledVisits, isLoading: isLoadingScheduled } = useQuery<any>({
-    queryKey: ["/api/scheduled-visits/client", user?.client?.id],
+    queryKey: ["/api/clients", user?.client?.id, "scheduled-visits"],
     enabled: !!user?.client?.id,
   });
 
@@ -143,7 +143,7 @@ export default function ClientDashboard() {
 
   // Stats Card Component
   const StatsCard = ({ title, value, icon: Icon, variant }: any) => {
-    const variantClasses = {
+    const variantClasses: Record<string, string> = {
       primary: "bg-blue-500 text-white",
       success: "bg-green-500 text-white",
       warning: "bg-yellow-500 text-white",
@@ -157,7 +157,7 @@ export default function ClientDashboard() {
             <p className="text-sm font-medium text-gray-600">{title}</p>
             <p className="text-3xl font-bold text-gray-900">{value}</p>
           </div>
-          <div className={`p-3 rounded-full ${variantClasses[variant]}`}>
+          <div className={`p-3 rounded-full ${variantClasses[variant] || variantClasses.primary}`}>
             <Icon className="h-6 w-6" />
           </div>
         </div>

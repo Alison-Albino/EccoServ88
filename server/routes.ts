@@ -86,6 +86,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current authenticated user (from localStorage)
+  app.get("/api/auth/user", async (req, res) => {
+    try {
+      // In a real implementation, this would use session/token auth
+      // For now, we expect the client to send user data or we return null
+      res.json(null);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Create client profile
   app.post("/api/clients", async (req, res) => {
     try {

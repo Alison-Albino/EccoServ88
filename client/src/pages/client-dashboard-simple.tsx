@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { format } from "date-fns";
 
 import {
@@ -25,11 +26,11 @@ export default function ClientDashboard() {
     endDate: "",
   });
 
-  // Get current user from auth
-  const { data: user } = useQuery<any>({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+  // Get current user from auth hook
+  const { user, logout } = useAuth();
+  
+  // Debug log to see user data
+  console.log("Current user from useAuth:", user);
 
   // Get visits for this client
   const { data: visits, isLoading } = useQuery<any>({
@@ -177,7 +178,16 @@ export default function ClientDashboard() {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">{user?.name}</span>
               <span className="text-xs text-gray-500 capitalize">({user?.userType})</span>
-              <Button variant="outline" size="sm">Sair</Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  logout();
+                  window.location.href = "/";
+                }}
+              >
+                Sair
+              </Button>
             </div>
           </div>
         </div>

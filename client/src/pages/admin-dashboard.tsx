@@ -701,44 +701,106 @@ export default function AdminDashboard() {
 
           <TabsContent value="materials">
             <div className="space-y-6">
-              <MaterialConsumptionReport />
               
+              {/* Resumo do Consumo Total */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <BarChart3 className="h-8 w-8 text-blue-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Total Consumido</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {materialConsumption?.consumption?.reduce((acc, item) => acc + item.totalKilograms, 0).toFixed(1) || 0} kg
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <Activity className="h-8 w-8 text-green-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Tipos de Materiais</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {materialConsumption?.consumption?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center">
+                    <TrendingUp className="h-8 w-8 text-purple-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-500">Maior Consumo</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {materialConsumption?.consumption?.[0]?.materialType || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Gráfico de Consumo Total de Materiais */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">Consumo Total de Materiais</h2>
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold text-gray-900">Consumo por Material (Quilogramas)</h2>
+                    <div className="text-sm text-gray-500">
+                      Dados de {visits?.visits?.length || 0} visitas realizadas
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="p-6">
                   {materialConsumption?.consumption && materialConsumption.consumption.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {materialConsumption.consumption.map((item, index) => (
-                        <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                          <h4 className="font-semibold text-gray-900 mb-2">{item.materialType}</h4>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-600">
-                              <strong>Total:</strong> {item.totalQuantity} g
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <strong>Em Kg:</strong> {item.totalKilograms} kg
-                            </p>
-                            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div className="space-y-6">
+                      {materialConsumption.consumption.map((item, index) => {
+                        const maxQuantity = Math.max(...materialConsumption.consumption.map(c => c.totalKilograms));
+                        const percentage = maxQuantity > 0 ? (item.totalKilograms / maxQuantity) * 100 : 0;
+                        
+                        return (
+                          <div key={index} className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <span className="font-semibold text-gray-900 text-lg">{item.materialType}</span>
+                                <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                                  <span>• {item.visitCount} visitas</span>
+                                  <span>• Média: {item.averagePerVisit}g por visita</span>
+                                  <span>• Total: {item.totalGrams.toLocaleString()}g</span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-2xl text-blue-600">{item.totalKilograms} kg</div>
+                                <div className="text-sm text-gray-500">
+                                  {percentage.toFixed(1)}% do total
+                                </div>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-4">
                               <div 
-                                className="bg-blue-600 h-2 rounded-full" 
-                                style={{ 
-                                  width: `${Math.min((item.totalQuantity / Math.max(...(materialConsumption.consumption.map(c => c.totalQuantity) || [1]))) * 100, 100)}%` 
-                                }}
-                              ></div>
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2" 
+                                style={{ width: `${Math.max(percentage, 5)}%` }}
+                              >
+                                {percentage > 15 && (
+                                  <span className="text-white text-xs font-medium">
+                                    {item.totalKilograms} kg
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-12">
                       <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">
-                        {materialConsumption ? 'Nenhum material foi consumido ainda.' : 'Carregando dados de consumo...'}
+                      <p className="text-gray-500 text-lg">
+                        {materialConsumption ? 'Nenhum consumo de materiais registrado ainda.' : 'Carregando dados de consumo...'}
+                      </p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Os dados aparecerão quando os prestadores registrarem visitas com materiais utilizados.
                       </p>
                     </div>
                   )}

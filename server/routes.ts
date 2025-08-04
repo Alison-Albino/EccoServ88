@@ -427,26 +427,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/materials/all-consumption", async (req, res) => {
     try {
-      // Get all material usage from visits
+      // Get all visits with details to access material usage
       const visits = await storage.getVisitsWithDetails();
-      const materialTotals: Record<string, number> = {};
+      const materialTotals: Record<string, { totalGrams: number, visitCount: number, dates: string[] }> = {};
       
+      // Process each visit to sum material usage
       for (const visit of visits) {
-        const materials = await storage.getMaterialUsageByVisitId(visit.id);
-        for (const material of materials) {
-          const key = material.materialType;
-          materialTotals[key] = (materialTotals[key] || 0) + material.quantity;
+        try {
+          const materials = await storage.getMaterialUsageByVisitId(visit.id);
+          const visitDate = new Date(visit.visitDate).toISOString().split('T')[0];
+          
+          for (const material of materials) {
+            const key = material.materialType;
+            if (!materialTotals[key]) {
+              materialTotals[key] = { totalGrams: 0, visitCount: 0, dates: [] };
+            }
+            materialTotals[key].totalGrams += material.quantity;
+            materialTotals[key].visitCount += 1;
+            if (!materialTotals[key].dates.includes(visitDate)) {
+              materialTotals[key].dates.push(visitDate);
+            }
+          }
+        } catch (materialError) {
+          console.error(`Error getting materials for visit ${visit.id}:`, materialError);
         }
       }
 
-      const consumption = Object.entries(materialTotals).map(([materialType, totalQuantity]) => ({
+      const consumption = Object.entries(materialTotals).map(([materialType, data]) => ({
         materialType,
-        totalQuantity,
-        totalKilograms: Number((totalQuantity / 1000).toFixed(3))
-      }));
+        totalGrams: data.totalGrams,
+        totalKilograms: Number((data.totalGrams / 1000).toFixed(3)),
+        visitCount: data.visitCount,
+        averagePerVisit: Number((data.totalGrams / data.visitCount).toFixed(1)),
+        usageDates: data.dates.sort()
+      })).sort((a, b) => b.totalKilograms - a.totalKilograms);
 
+      console.log('Material consumption calculated:', consumption);
       res.json({ consumption });
     } catch (error) {
+      console.error('Error calculating material consumption:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

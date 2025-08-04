@@ -680,10 +680,10 @@ export default function ProviderDashboard() {
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex-1">
                               <h4 className="font-semibold text-gray-900 text-lg">
-                                {scheduledVisit.well.client.user.name} - {scheduledVisit.well.name}
+                                {scheduledVisit.well?.client?.user?.name || 'Cliente'} - {scheduledVisit.well?.name || 'Poço'}
                               </h4>
                               <p className="text-sm text-gray-600 mt-1">
-                                {scheduledVisit.well.location}
+                                {scheduledVisit.well?.location || 'Localização não informada'}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                                 <span className="flex items-center">

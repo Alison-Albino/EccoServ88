@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 
@@ -48,6 +49,12 @@ export function ImageViewer({ images, trigger, className }: ImageViewerProps) {
         {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="max-w-4xl w-full h-[90vh] p-0">
+        <VisuallyHidden>
+          <DialogTitle>Visualizador de Imagens</DialogTitle>
+          <DialogDescription>
+            Visualize as fotos da visita técnica
+          </DialogDescription>
+        </VisuallyHidden>
         <div className="relative h-full bg-black rounded-lg overflow-hidden">
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex justify-between items-center">

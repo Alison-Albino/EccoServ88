@@ -84,7 +84,7 @@ export default function Home() {
                   Entrar
                 </Button>
               </Link>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                 Solicitar Orçamento
               </Button>
             </div>
@@ -123,18 +123,18 @@ export default function Home() {
                 </Button>
               </div>
 
-              <div className="flex items-center space-x-8 pt-4">
+              <div className="flex flex-wrap items-center gap-6 pt-4">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-600">Atendimento 24h</span>
+                  <span className="text-gray-600 text-sm">Atendimento 24h</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-600">Garantia Total</span>
+                  <span className="text-gray-600 text-sm">Garantia Total</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-600">Orçamento Grátis</span>
+                  <span className="text-gray-600 text-sm">Orçamento Grátis</span>
                 </div>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function Home() {
                     <option>Instalação Nova</option>
                     <option>Inspeção Técnica</option>
                   </select>
-                  <Button className="w-full bg-white text-blue-600 hover:bg-gray-50 font-semibold">
+                  <Button className="w-full bg-white text-blue-600 hover:bg-gray-50 hover:text-blue-700 font-semibold">
                     Solicitar Orçamento Gratuito
                   </Button>
                 </div>
@@ -228,7 +228,7 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
+                  <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white">
                     Solicitar Orçamento
                   </Button>
                 </CardContent>
@@ -281,11 +281,11 @@ export default function Home() {
             Entre em contato conosco hoje mesmo e solicite seu orçamento gratuito
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50 text-lg px-8">
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50 hover:text-blue-700 text-lg px-8">
               <Phone className="mr-2 h-5 w-5" />
               Ligar Agora: (11) 9999-9999
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 text-lg px-8">
               <Mail className="mr-2 h-5 w-5" />
               Solicitar Orçamento
             </Button>

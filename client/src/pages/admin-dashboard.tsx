@@ -407,7 +407,7 @@ export default function AdminDashboard() {
                             Cliente: {visit.well.client.user.name} • Técnico: {visit.provider.user.name}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • {getServiceTypeLabel(visit.serviceType)}
+                            {format(new Date(visit.visitDate), 'dd/MM/yyyy HH:mm')} • {getServiceTypeLabel(visit.serviceType)}
                           </p>
                         </div>
                         {getVisitStatusBadge(visit.status)}
@@ -445,7 +445,7 @@ export default function AdminDashboard() {
                                 {well.name}
                               </h4>
                               <p className="text-sm text-gray-600">
-                                {well.client.user.name} • Última visita: {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy') : 'N/A'}
+                                {well.client.user.name} • Última visita: {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy HH:mm') : 'N/A'}
                               </p>
                             </div>
                           </div>
@@ -512,7 +512,7 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                               <p><strong>Técnico:</strong> {visit.provider.user.name}</p>
-                              <p><strong>Data:</strong> {format(new Date(visit.visitDate), 'dd/MM/yyyy')}</p>
+                              <p><strong>Data:</strong> {format(new Date(visit.visitDate), 'dd/MM/yyyy HH:mm')}</p>
                               <p><strong>Tipo:</strong> {getServiceTypeLabel(visit.serviceType)}</p>
                             </div>
                           </div>
@@ -589,7 +589,7 @@ export default function AdminDashboard() {
                         </div>
                         
                         <div className="text-sm text-gray-600">
-                          <p><strong>Última Manutenção:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy') : 'Nunca'}</p>
+                          <p><strong>Última Manutenção:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy HH:mm') : 'Nunca'}</p>
                           <p><strong>Status:</strong> {well.status}</p>
                         </div>
                       </div>
@@ -633,7 +633,7 @@ export default function AdminDashboard() {
                               Prestador: {scheduled.provider?.user?.name || 'N/A'}
                             </p>
                             <p className="text-sm text-gray-600">
-                              <strong>Data:</strong> {format(new Date(scheduled.scheduledDate), 'dd/MM/yyyy')} • 
+                              <strong>Data:</strong> {format(new Date(scheduled.scheduledDate), 'dd/MM/yyyy HH:mm')} • 
                               <strong>Tipo:</strong> {scheduled.visitType}
                             </p>
                           </div>
@@ -700,7 +700,7 @@ export default function AdminDashboard() {
                               <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
                                 <span><strong>Poços:</strong> {clientWells.length}</span>
                                 <span><strong>Visitas:</strong> {clientVisits.length}</span>
-                                <span><strong>Última visita:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy') : 'Nunca'}</span>
+                                <span><strong>Última visita:</strong> {lastVisit ? format(new Date(lastVisit.visitDate), 'dd/MM/yyyy HH:mm') : 'Nunca'}</span>
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">

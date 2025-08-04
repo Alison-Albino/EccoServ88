@@ -451,14 +451,25 @@ export default function ProviderDashboard() {
                 </div>
                 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="visitDate">Data da Visita *</Label>
                   <Input
                     id="visitDate"
                     type="date"
-                    value={visitForm.visitDate}
-                    onChange={(e) => setVisitForm({ ...visitForm, visitDate: e.target.value })}
+                    value={visitForm.visitDate.split('T')[0] || visitForm.visitDate}
+                    onChange={(e) => setVisitForm({ ...visitForm, visitDate: e.target.value + (visitForm.visitDate.includes('T') ? visitForm.visitDate.split('T')[1] : 'T10:00') })}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="visitTime">Horário da Visita *</Label>
+                  <Input
+                    id="visitTime"
+                    type="time"
+                    value={visitForm.visitDate.includes('T') ? visitForm.visitDate.split('T')[1] : '10:00'}
+                    onChange={(e) => setVisitForm({ ...visitForm, visitDate: (visitForm.visitDate.split('T')[0] || visitForm.visitDate) + 'T' + e.target.value })}
                     required
                   />
                 </div>
@@ -523,7 +534,7 @@ export default function ProviderDashboard() {
                 </Select>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="visitType">Tipo de Visita *</Label>
                   <Select
@@ -541,15 +552,26 @@ export default function ProviderDashboard() {
                 </div>
                 
                 {visitForm.visitType === 'periodic' && (
-                  <div>
-                    <Label htmlFor="nextVisitDate">Data da Próxima Visita</Label>
-                    <Input
-                      id="nextVisitDate"
-                      type="date"
-                      value={visitForm.nextVisitDate}
-                      onChange={(e) => setVisitForm({ ...visitForm, nextVisitDate: e.target.value })}
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <Label htmlFor="nextVisitDate">Data da Próxima Visita</Label>
+                      <Input
+                        id="nextVisitDate"
+                        type="date"
+                        value={visitForm.nextVisitDate.split('T')[0] || visitForm.nextVisitDate}
+                        onChange={(e) => setVisitForm({ ...visitForm, nextVisitDate: e.target.value + (visitForm.nextVisitDate.includes('T') ? visitForm.nextVisitDate.split('T')[1] : 'T10:00') })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="nextVisitTime">Horário da Próxima Visita</Label>
+                      <Input
+                        id="nextVisitTime"
+                        type="time"
+                        value={visitForm.nextVisitDate.includes('T') ? visitForm.nextVisitDate.split('T')[1] : '10:00'}
+                        onChange={(e) => setVisitForm({ ...visitForm, nextVisitDate: (visitForm.nextVisitDate.split('T')[0] || visitForm.nextVisitDate) + 'T' + e.target.value })}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
               
@@ -837,7 +859,7 @@ export default function ProviderDashboard() {
                             {visit.well.client.user.name} - {visit.well.name}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            {format(new Date(visit.visitDate), 'dd/MM/yyyy')}
+                            {format(new Date(visit.visitDate), 'dd/MM/yyyy HH:mm')}
                           </p>
                         </div>
                         {getStatusBadge(visit.status)}
@@ -1256,7 +1278,7 @@ export default function ProviderDashboard() {
                                 <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs mr-2">
                                   ID: {visit.id}
                                 </span>
-                                {format(new Date(visit.visitDate), 'dd/MM/yyyy')} • {visit.well.location}
+                                {format(new Date(visit.visitDate), 'dd/MM/yyyy HH:mm')} • {visit.well.location}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                                 <span className="flex items-center">
@@ -1416,7 +1438,7 @@ export default function ProviderDashboard() {
                               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                                 <span className="flex items-center">
                                   <Calendar className="h-4 w-4 mr-1" />
-                                  {format(new Date(scheduledVisit.scheduledDate), 'dd/MM/yyyy')}
+                                  {format(new Date(scheduledVisit.scheduledDate), 'dd/MM/yyyy HH:mm')}
                                 </span>
                                 <span className="flex items-center">
                                   {getServiceIcon(scheduledVisit.serviceType)}

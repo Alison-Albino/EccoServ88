@@ -345,7 +345,7 @@ export default function ClientDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             {getVisitStatusBadge(visit.status)}
-                            <span className="text-sm text-gray-500">{visit.visitDate ? format(new Date(visit.visitDate), 'dd/MM/yyyy') : 'Data inválida'}</span>
+                            <span className="text-sm text-gray-500">{visit.visitDate ? format(new Date(visit.visitDate), 'dd/MM/yyyy HH:mm') : 'Data inválida'}</span>
                           </div>
                         </div>
                         

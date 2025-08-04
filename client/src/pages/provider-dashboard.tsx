@@ -89,6 +89,12 @@ export default function ProviderDashboard() {
         title: "Visita registrada!",
         description: "A visita foi registrada com sucesso.",
       });
+      
+      // Invalidate all related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'visits-with-materials'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'scheduled-visits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'visits'] });
+      
       setVisitForm({
         visitDate: "",
         clientId: "",
@@ -100,7 +106,6 @@ export default function ProviderDashboard() {
         materials: [],
       });
       setPhotos([]);
-      queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'visits'] });
     },
     onError: (error) => {
       toast({

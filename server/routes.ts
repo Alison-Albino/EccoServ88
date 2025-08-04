@@ -159,14 +159,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/visits", upload.array('photos', 10), async (req, res) => {
     try {
-      const visitData = insertVisitSchema.parse({
-        ...req.body,
+      console.log('Received visit data:', req.body);
+      
+      const visitData = {
+        wellId: req.body.wellId,
+        providerId: req.body.providerId,
         visitDate: new Date(req.body.visitDate),
+        serviceType: req.body.serviceType,
+        visitType: req.body.visitType,
         nextVisitDate: req.body.nextVisitDate ? new Date(req.body.nextVisitDate) : null,
+        observations: req.body.observations || '',
+        status: req.body.status || 'completed',
         photos: req.files ? (req.files as Express.Multer.File[]).map(file => file.filename) : []
-      });
+      };
+      
+      console.log('Processed visit data:', visitData);
+      
+      const parsedData = insertVisitSchema.parse(visitData);
 
-      const visit = await storage.createVisit(visitData);
+      const visit = await storage.createVisit(parsedData);
 
       // Handle materials if provided
       if (req.body.materials) {

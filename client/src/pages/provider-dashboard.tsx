@@ -133,7 +133,10 @@ export default function ProviderDashboard() {
     formData.append('visitDate', visitForm.visitDate);
     formData.append('serviceType', visitForm.serviceType);
     formData.append('visitType', visitForm.visitType);
-    formData.append('nextVisitDate', visitForm.nextVisitDate);
+    // Only append nextVisitDate if it has a value
+    if (visitForm.nextVisitDate && visitForm.nextVisitDate.trim() !== '') {
+      formData.append('nextVisitDate', visitForm.nextVisitDate);
+    }
     formData.append('observations', visitForm.observations);
     formData.append('status', 'completed');
     formData.append('materials', JSON.stringify(visitForm.materials));

@@ -48,6 +48,18 @@ export default function ProviderDashboard() {
     waterParameters: [] as Array<{ parameter: WaterParameter; value: number; unit: string; status: string; notes?: string }>,
   });
   const [photos, setPhotos] = useState<File[]>([]);
+
+  // Well registration form
+  const [wellForm, setWellForm] = useState({
+    clientId: "",
+    name: "",
+    type: "",
+    location: "",
+    depth: "",
+    diameter: "",
+    installationDate: "",
+    description: "",
+  });
   
   // Filters for visits
   const [visitFilters, setVisitFilters] = useState({
@@ -102,6 +114,53 @@ export default function ProviderDashboard() {
   });
 
 
+
+  // Create well mutation
+  const createWellMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const wellData = {
+        ...data,
+        depth: parseFloat(data.depth),
+        diameter: parseFloat(data.diameter),
+        status: "active",
+      };
+      const response = await fetch('/api/wells', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(wellData),
+      });
+      if (!response.ok) {
+        throw new Error('Erro ao cadastrar poço');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Poço cadastrado com sucesso!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/wells'] });
+      setWellForm({
+        clientId: "",
+        name: "",
+        type: "",
+        location: "",
+        depth: "",
+        diameter: "",
+        installationDate: "",
+        description: "",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao cadastrar poço",
+        variant: "destructive",
+      });
+    },
+  });
 
   const createVisitMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -222,6 +281,22 @@ export default function ProviderDashboard() {
     }
   };
 
+  const handleWellSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validação
+    if (!wellForm.clientId || !wellForm.name || !wellForm.type || !wellForm.location || !wellForm.depth || !wellForm.diameter || !wellForm.installationDate) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createWellMutation.mutate(wellForm);
+  };
+
   const getStatusBadge = (status: string) => {
     const variants = {
       completed: { label: "Concluído", className: "bg-success/10 text-success" },
@@ -270,8 +345,9 @@ export default function ProviderDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs defaultValue="visits" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
+            <TabsTrigger value="wells">Cadastrar Poços</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
             <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
           </TabsList>
@@ -730,6 +806,159 @@ export default function ProviderDashboard() {
             </div>
           </TabsContent>
 
+          {/* Wells Registration Tab */}
+          <TabsContent value="wells">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">Cadastrar Novo Poço</h2>
+                <p className="text-sm text-gray-600 mt-1">Cadastre um novo poço para um cliente existente</p>
+              </div>
+              
+              <form onSubmit={handleWellSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="wellClientId">Cliente *</Label>
+                    <Select
+                      value={wellForm.clientId}
+                      onValueChange={(value) => setWellForm({ ...wellForm, clientId: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o cliente..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients?.clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="wellName">Nome do Poço *</Label>
+                    <Input
+                      id="wellName"
+                      value={wellForm.name}
+                      onChange={(e) => setWellForm({ ...wellForm, name: e.target.value })}
+                      placeholder="Ex: Poço Principal"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="wellType">Tipo do Poço *</Label>
+                    <Select
+                      value={wellForm.type}
+                      onValueChange={(value) => setWellForm({ ...wellForm, type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="artesiano">Artesiano</SelectItem>
+                        <SelectItem value="semi-artesiano">Semi-artesiano</SelectItem>
+                        <SelectItem value="freático">Freático</SelectItem>
+                        <SelectItem value="tubular">Tubular</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="wellLocation">Localização *</Label>
+                    <Input
+                      id="wellLocation"
+                      value={wellForm.location}
+                      onChange={(e) => setWellForm({ ...wellForm, location: e.target.value })}
+                      placeholder="Endereço completo do poço"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="wellDepth">Profundidade (m) *</Label>
+                    <Input
+                      id="wellDepth"
+                      type="number"
+                      step="0.1"
+                      value={wellForm.depth}
+                      onChange={(e) => setWellForm({ ...wellForm, depth: e.target.value })}
+                      placeholder="100"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="wellDiameter">Diâmetro (cm) *</Label>
+                    <Input
+                      id="wellDiameter"
+                      type="number"
+                      step="0.1"
+                      value={wellForm.diameter}
+                      onChange={(e) => setWellForm({ ...wellForm, diameter: e.target.value })}
+                      placeholder="15"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="wellInstallationDate">Data de Instalação *</Label>
+                    <Input
+                      id="wellInstallationDate"
+                      type="date"
+                      value={wellForm.installationDate}
+                      onChange={(e) => setWellForm({ ...wellForm, installationDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="wellDescription">Descrição (Opcional)</Label>
+                  <Textarea
+                    id="wellDescription"
+                    value={wellForm.description}
+                    onChange={(e) => setWellForm({ ...wellForm, description: e.target.value })}
+                    placeholder="Observações sobre o poço..."
+                    rows={3}
+                  />
+                </div>
+                
+                <div className="flex space-x-4">
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    disabled={createWellMutation.isPending}
+                  >
+                    {createWellMutation.isPending ? "Cadastrando..." : "Cadastrar Poço"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="px-6"
+                    onClick={() => {
+                      setWellForm({
+                        clientId: "",
+                        name: "",
+                        type: "",
+                        location: "",
+                        depth: "",
+                        diameter: "",
+                        installationDate: "",
+                        description: "",
+                      });
+                    }}
+                  >
+                    Limpar
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </TabsContent>
 
           <TabsContent value="my-visits">
             <div className="space-y-6">

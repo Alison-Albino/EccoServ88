@@ -350,6 +350,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete provider
+  app.delete("/api/admin/providers/:providerId", async (req, res) => {
+    try {
+      const { providerId } = req.params;
+      
+      // Get provider to find associated user
+      const provider = await storage.getProvider(providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "Prestador não encontrado" });
+      }
+
+      // Delete provider profile first
+      await storage.deleteProvider(providerId);
+      
+      // Delete associated user
+      await storage.deleteUser(provider.userId);
+
+      res.json({ message: "Prestador excluído com sucesso" });
+    } catch (error) {
+      console.error('Delete provider error:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Reset provider password
+  app.put("/api/admin/providers/:providerId/reset-password", async (req, res) => {
+    try {
+      const { providerId } = req.params;
+      
+      // Get provider to find associated user
+      const provider = await storage.getProvider(providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "Prestador não encontrado" });
+      }
+
+      // Reset password to 123456
+      await storage.updateUserPassword(provider.userId, "123456");
+
+      res.json({ message: "Senha resetada para 123456" });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.get("/api/admin/wells", async (req, res) => {
     try {
       const wells = await storage.getWellsWithClient();

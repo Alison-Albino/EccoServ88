@@ -32,6 +32,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getUserWithProfile(id: string): Promise<UserWithProfile | undefined>;
+  deleteUser(id: string): Promise<void>;
+  updateUserPassword(id: string, password: string): Promise<void>;
 
   // Client operations
   getClient(id: string): Promise<Client | undefined>;
@@ -51,6 +53,7 @@ export interface IStorage {
   getProviderByUserId(userId: string): Promise<Provider | undefined>;
   createProvider(provider: InsertProvider): Promise<Provider>;
   getAllProviders(): Promise<Array<Provider & { user: User }>>;
+  deleteProvider(id: string): Promise<void>;
 
   // Visit operations
   getVisit(id: string): Promise<Visit | undefined>;
@@ -354,6 +357,21 @@ export class MemStorage implements IStorage {
       ...provider,
       user: this.users.get(provider.userId)!
     })).filter(item => item.user);
+  }
+
+  async deleteProvider(id: string): Promise<void> {
+    this.providers.delete(id);
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    this.users.delete(id);
+  }
+
+  async updateUserPassword(id: string, password: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      this.users.set(id, { ...user, password });
+    }
   }
 
   // Visit operations  

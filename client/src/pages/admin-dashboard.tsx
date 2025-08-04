@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ImageViewer } from "@/components/image-viewer";
-import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity } from "lucide-react";
+import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity, Trash2, Key } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -120,8 +120,60 @@ export default function AdminDashboard() {
     },
   });
 
+  const deleteProviderMutation = useMutation({
+    mutationFn: async (providerId: string) => {
+      await apiRequest('DELETE', `/api/admin/providers/${providerId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Prestador excluído com sucesso!",
+        description: "O prestador foi removido do sistema.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/providers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir prestador",
+        description: error.message || "Ocorreu um erro ao excluir o prestador.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (providerId: string) => {
+      await apiRequest('PUT', `/api/admin/providers/${providerId}/reset-password`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Senha resetada com sucesso!",
+        description: "A senha foi alterada para 123456.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao resetar senha",
+        description: error.message || "Ocorreu um erro ao resetar a senha.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmitProvider = (data: ProviderRegisterForm) => {
     registerProviderMutation.mutate(data);
+  };
+
+  const handleDeleteProvider = (providerId: string, providerName: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o prestador "${providerName}"? Esta ação não pode ser desfeita.`)) {
+      deleteProviderMutation.mutate(providerId);
+    }
+  };
+
+  const handleResetPassword = (providerId: string, providerName: string) => {
+    if (window.confirm(`Tem certeza que deseja resetar a senha do prestador "${providerName}" para 123456?`)) {
+      resetPasswordMutation.mutate(providerId);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -514,6 +566,26 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResetPassword(provider.id, provider.user.name)}
+                              disabled={resetPasswordMutation.isPending}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Key className="h-4 w-4 mr-1" />
+                              Resetar Senha
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteProvider(provider.id, provider.user.name)}
+                              disabled={deleteProviderMutation.isPending}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Excluir
+                            </Button>
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               Ativo
                             </span>

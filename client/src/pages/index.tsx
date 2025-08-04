@@ -136,9 +136,12 @@ export default function IndexPage() {
                 <CheckCircle className="h-4 w-4 text-success" />
                 <span className="text-sm">Gere faturas automaticamente</span>
               </div>
-              <Link href="/register?type=provider" className="block pt-4">
-                <Button className="w-full">Cadastrar como Prestador</Button>
-              </Link>
+              <div className="pt-4 text-center">
+                <p className="text-sm text-gray-600 mb-3">Cadastro realizado pelo administrador</p>
+                <Link href="/login">
+                  <Button className="w-full" variant="outline">Fazer Login</Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
 

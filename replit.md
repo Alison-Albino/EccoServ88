@@ -38,6 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Client-side storage using localStorage for user persistence
 - **Authorization**: Role-based access control with three user types (client, provider, admin)
 - **Route Protection**: Frontend route guards that redirect unauthorized users
+- **Provider Registration**: Only administrators can register new service providers (clients can self-register)
 
 ### Data Models
 - **Users**: Base user entity with email, password, name, and user type

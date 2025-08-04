@@ -2,12 +2,32 @@ import { useAuth } from "@/hooks/use-auth";
 import { Navbar } from "@/components/navbar";
 import { StatsCard } from "@/components/stats-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, DollarSign, CheckCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { type VisitWithDetails, type WellWithClient, type InvoiceWithDetails } from "@shared/schema";
 import { format } from "date-fns";
 import { InvoiceList } from "@/components/invoice-list";
+
+const providerRegisterSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  phone: z.string().min(1, "Telefone é obrigatório"),
+  specialties: z.string().min(1, "Especialidades são obrigatórias"),
+});
+
+type ProviderRegisterForm = z.infer<typeof providerRegisterSchema>;
 
 interface AdminStats {
   totalClients: number;
@@ -18,6 +38,19 @@ interface AdminStats {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const providerForm = useForm<ProviderRegisterForm>({
+    resolver: zodResolver(providerRegisterSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      phone: "",
+      specialties: "",
+    },
+  });
 
   const { data: stats } = useQuery<AdminStats>({
     queryKey: ['/api/admin/stats'],
@@ -34,6 +67,54 @@ export default function AdminDashboard() {
   const { data: invoices } = useQuery<{ invoices: InvoiceWithDetails[] }>({
     queryKey: ['/api/invoices'],
   });
+
+  const registerProviderMutation = useMutation({
+    mutationFn: async (data: ProviderRegisterForm) => {
+      const userData = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        userType: "provider",
+      };
+
+      // Register user
+      const userResponse = await apiRequest('/api/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+
+      // Create provider profile
+      await apiRequest('/api/providers', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: userResponse.id,
+          specialties: data.specialties.split(',').map(s => s.trim()),
+          phone: data.phone,
+        }),
+      });
+
+      return userResponse;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Prestador cadastrado com sucesso!",
+        description: "O prestador foi adicionado ao sistema.",
+      });
+      providerForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Ocorreu um erro ao cadastrar o prestador.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmitProvider = (data: ProviderRegisterForm) => {
+    registerProviderMutation.mutate(data);
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -133,11 +214,12 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="wells">Poços</TabsTrigger>
             <TabsTrigger value="visits">Visitas</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
+            <TabsTrigger value="providers">Prestadores</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -371,6 +453,108 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="providers">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <UserPlus className="h-5 w-5" />
+                  <span>Cadastrar Prestador de Serviço</span>
+                </CardTitle>
+                <CardDescription>
+                  Apenas administradores podem cadastrar novos prestadores de serviço no sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...providerForm}>
+                  <form onSubmit={providerForm.handleSubmit(onSubmitProvider)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={providerForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome Completo</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Digite o nome completo" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={providerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Digite o email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={providerForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Digite a senha" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={providerForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="(00) 00000-0000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={providerForm.control}
+                      name="specialties"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Especialidades</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Ex: Manutenção preventiva, Limpeza de poços, Troca de bombas (separadas por vírgula)" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={registerProviderMutation.isPending}
+                    >
+                      {registerProviderMutation.isPending ? "Cadastrando..." : "Cadastrar Prestador"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

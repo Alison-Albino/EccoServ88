@@ -103,7 +103,23 @@ export default function ProviderDashboard() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user?.provider?.id) return;
+    console.log('Formulário submetido:', visitForm);
+    console.log('User provider ID:', user?.provider?.id);
+    
+    if (!user?.provider?.id) {
+      console.error('Provider ID não encontrado');
+      return;
+    }
+
+    // Validação dos campos obrigatórios
+    if (!visitForm.visitDate || !visitForm.clientId || !visitForm.wellId || !visitForm.serviceType || !visitForm.visitType || !visitForm.observations) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const formData = new FormData();
     formData.append('wellId', visitForm.wellId);
@@ -120,6 +136,7 @@ export default function ProviderDashboard() {
       formData.append('photos', photo);
     });
 
+    console.log('Enviando dados para o backend...');
     createVisitMutation.mutate(formData);
   };
 
@@ -398,6 +415,9 @@ export default function ProviderDashboard() {
                   type="submit" 
                   className="flex-1"
                   disabled={createVisitMutation.isPending}
+                  onClick={(e) => {
+                    console.log('Botão clicado!', e);
+                  }}
                 >
                   {createVisitMutation.isPending ? "Registrando..." : "Registrar Visita"}
                 </Button>

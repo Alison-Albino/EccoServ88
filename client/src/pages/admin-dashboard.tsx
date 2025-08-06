@@ -60,7 +60,6 @@ interface AdminStats {
   totalWells: number;
   totalVisits: number;
   monthlyVisits: number;
-  scheduledVisits: number;
   scheduledVisits?: number;
 }
 
@@ -491,23 +490,45 @@ export default function AdminDashboard() {
             title="Poços com Problemas"
             value={problemWells}
             icon={AlertTriangle}
-            variant="destructive"
+            variant="error"
           />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="visits">Visitas</TabsTrigger>
-            <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
-            <TabsTrigger value="clients">Clientes</TabsTrigger>
-            <TabsTrigger value="wells">Poços</TabsTrigger>
-            <TabsTrigger value="materials">Materiais</TabsTrigger>
-            <TabsTrigger value="providers">Prestadores</TabsTrigger>
-            <TabsTrigger value="register">Cadastrar Prestador</TabsTrigger>
-            <TabsTrigger value="register-client">Cadastrar Cliente</TabsTrigger>
-            <TabsTrigger value="register-well">Cadastrar Poço</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto">
+            <TabsList className="inline-flex w-max min-w-full h-auto p-1 space-x-1">
+              <TabsTrigger value="overview" className="whitespace-nowrap px-3 py-2 text-sm">
+                Visão Geral
+              </TabsTrigger>
+              <TabsTrigger value="visits" className="whitespace-nowrap px-3 py-2 text-sm">
+                Visitas
+              </TabsTrigger>
+              <TabsTrigger value="scheduled" className="whitespace-nowrap px-3 py-2 text-sm">
+                Agendamentos
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="whitespace-nowrap px-3 py-2 text-sm">
+                Clientes
+              </TabsTrigger>
+              <TabsTrigger value="wells" className="whitespace-nowrap px-3 py-2 text-sm">
+                Poços
+              </TabsTrigger>
+              <TabsTrigger value="materials" className="whitespace-nowrap px-3 py-2 text-sm">
+                Materiais
+              </TabsTrigger>
+              <TabsTrigger value="providers" className="whitespace-nowrap px-3 py-2 text-sm">
+                Prestadores
+              </TabsTrigger>
+              <TabsTrigger value="register" className="whitespace-nowrap px-3 py-2 text-sm">
+                Cadastrar Prestador
+              </TabsTrigger>
+              <TabsTrigger value="register-client" className="whitespace-nowrap px-3 py-2 text-sm">
+                Cadastrar Cliente
+              </TabsTrigger>
+              <TabsTrigger value="register-well" className="whitespace-nowrap px-3 py-2 text-sm">
+                Cadastrar Poço
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overview">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

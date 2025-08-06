@@ -76,6 +76,10 @@ export default function AdminDashboard() {
     wellId: "",
   });
 
+  // Client search state for well registration
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientSearch, setShowClientSearch] = useState(false);
+
   const providerForm = useForm<ProviderRegisterForm>({
     resolver: zodResolver(providerRegisterSchema),
     defaultValues: {
@@ -146,6 +150,16 @@ export default function AdminDashboard() {
     queryKey: ['/api/admin/clients'],
     refetchInterval: 10000, // Refetch every 10 seconds
   });
+
+  // Filter clients based on search term (name or CPF)
+  const filteredClients = clients?.clients?.filter((client) => {
+    if (!clientSearch) return true;
+    const searchTerm = clientSearch.toLowerCase();
+    return (
+      client.user.name.toLowerCase().includes(searchTerm) ||
+      client.cpf.toLowerCase().includes(searchTerm)
+    );
+  }) || [];
 
   const registerProviderMutation = useMutation({
     mutationFn: async (data: ProviderRegisterForm) => {
@@ -336,6 +350,8 @@ export default function AdminDashboard() {
         description: "O poço foi adicionado ao sistema.",
       });
       wellForm.reset();
+      setClientSearch("");
+      setShowClientSearch(false);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/wells'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
     },
@@ -1337,20 +1353,55 @@ export default function AdminDashboard() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Cliente *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o cliente..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {clients?.clients.map((client: any) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    {client.user.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <div className="space-y-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Buscar por nome ou CPF..."
+                                    value={clientSearch}
+                                    onChange={(e) => setClientSearch(e.target.value)}
+                                    className="flex-1"
+                                  />
+                                  <Button 
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowClientSearch(!showClientSearch)}
+                                  >
+                                    <Search className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                {(showClientSearch || clientSearch) && (
+                                  <div className="border rounded-md max-h-40 overflow-y-auto">
+                                    {!clients?.clients ? (
+                                      <div className="p-3 text-sm text-gray-500">Carregando clientes...</div>
+                                    ) : filteredClients.length > 0 ? (
+                                      filteredClients.map((client) => (
+                                        <div
+                                          key={client.id}
+                                          className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
+                                            field.value === client.id ? 'bg-blue-50 border-blue-200' : ''
+                                          }`}
+                                          onClick={() => {
+                                            field.onChange(client.id);
+                                            setShowClientSearch(false);
+                                            setClientSearch(client.user.name);
+                                          }}
+                                        >
+                                          <div className="font-medium text-sm">{client.user.name}</div>
+                                          <div className="text-xs text-gray-500">CPF: {client.cpf}</div>
+                                          <div className="text-xs text-gray-500">{client.address}</div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="p-3 text-sm text-gray-500">
+                                        {clientSearch ? 'Nenhum cliente encontrado para esta busca' : 'Nenhum cliente encontrado'}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

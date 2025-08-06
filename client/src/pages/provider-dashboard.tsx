@@ -67,9 +67,14 @@ export default function ProviderDashboard() {
   });
 
 
-  const { data: clients } = useQuery<{ clients: Client[] }>({
+  const { data: clients, isLoading: clientsLoading, error: clientsError } = useQuery<{ clients: Client[] }>({
     queryKey: ['/api/clients'],
   });
+
+  // Debug logging
+  console.log('Clients data:', clients);
+  console.log('Clients loading:', clientsLoading);
+  console.log('Clients error:', clientsError);
 
   const { data: wells } = useQuery<{ wells: Well[] }>({
     queryKey: ['/api/wells'],
@@ -356,11 +361,19 @@ export default function ProviderDashboard() {
                       <SelectValue placeholder="Selecione o cliente..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {clients?.clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.user.name}
-                        </SelectItem>
-                      ))}
+                      {clientsLoading ? (
+                        <SelectItem value="loading" disabled>Carregando clientes...</SelectItem>
+                      ) : clientsError ? (
+                        <SelectItem value="error" disabled>Erro ao carregar clientes</SelectItem>
+                      ) : clients?.clients?.length ? (
+                        clients.clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.user.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>Nenhum cliente encontrado</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

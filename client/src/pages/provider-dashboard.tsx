@@ -55,6 +55,10 @@ export default function ProviderDashboard() {
     materials: [] as Array<{ type: AvailableMaterial; quantity: number }>,
     waterParameters: [] as Array<{ parameter: WaterParameter; value: number; unit: string; status: string; notes?: string }>,
   });
+  
+  // Client search state
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientSearch, setShowClientSearch] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
 
 
@@ -71,10 +75,7 @@ export default function ProviderDashboard() {
     queryKey: ['/api/clients'],
   });
 
-  // Debug logging
-  console.log('Clients data:', clients);
-  console.log('Clients loading:', clientsLoading);
-  console.log('Clients error:', clientsError);
+
 
   const { data: wells } = useQuery<{ wells: Well[] }>({
     queryKey: ['/api/wells'],
@@ -84,6 +85,16 @@ export default function ProviderDashboard() {
     queryKey: ['/api/providers', user?.provider?.id, 'visits-with-materials'],
     enabled: !!user?.provider?.id,
   });
+
+  // Filter clients based on search term (name or CPF)
+  const filteredClients = clients?.clients?.filter((client) => {
+    if (!clientSearch) return true;
+    const searchTerm = clientSearch.toLowerCase();
+    return (
+      client.user.name.toLowerCase().includes(searchTerm) ||
+      client.cpf.toLowerCase().includes(searchTerm)
+    );
+  }) || [];
 
   // Filter visits based on search and date filters
   const filteredVisits = visits?.visits?.filter((visit) => {
@@ -353,29 +364,55 @@ export default function ProviderDashboard() {
                 
                 <div>
                   <Label htmlFor="clientId">Cliente *</Label>
-                  <Select
-                    value={visitForm.clientId}
-                    onValueChange={(value) => setVisitForm({ ...visitForm, clientId: value, wellId: "" })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o cliente..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clientsLoading ? (
-                        <SelectItem value="loading" disabled>Carregando clientes...</SelectItem>
-                      ) : clientsError ? (
-                        <SelectItem value="error" disabled>Erro ao carregar clientes</SelectItem>
-                      ) : clients?.clients?.length ? (
-                        clients.clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.user.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="none" disabled>Nenhum cliente encontrado</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Buscar por nome ou CPF..."
+                        value={clientSearch}
+                        onChange={(e) => setClientSearch(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowClientSearch(!showClientSearch)}
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {(showClientSearch || clientSearch) && (
+                      <div className="border rounded-md max-h-40 overflow-y-auto">
+                        {clientsLoading ? (
+                          <div className="p-3 text-sm text-gray-500">Carregando clientes...</div>
+                        ) : clientsError ? (
+                          <div className="p-3 text-sm text-red-500">Erro ao carregar clientes</div>
+                        ) : filteredClients.length > 0 ? (
+                          filteredClients.map((client) => (
+                            <div
+                              key={client.id}
+                              className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
+                                visitForm.clientId === client.id ? 'bg-blue-50 border-blue-200' : ''
+                              }`}
+                              onClick={() => {
+                                setVisitForm({ ...visitForm, clientId: client.id, wellId: "" });
+                                setShowClientSearch(false);
+                                setClientSearch(client.user.name);
+                              }}
+                            >
+                              <div className="font-medium text-sm">{client.user.name}</div>
+                              <div className="text-xs text-gray-500">CPF: {client.cpf}</div>
+                              <div className="text-xs text-gray-500">{client.address}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-3 text-sm text-gray-500">
+                            {clientSearch ? 'Nenhum cliente encontrado para esta busca' : 'Nenhum cliente encontrado'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               
@@ -730,6 +767,8 @@ export default function ProviderDashboard() {
                       waterParameters: [],
                     });
                     setPhotos([]);
+                    setClientSearch("");
+                    setShowClientSearch(false);
                   }}
                 >
                   Limpar

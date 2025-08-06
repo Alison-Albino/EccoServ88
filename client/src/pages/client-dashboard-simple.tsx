@@ -70,62 +70,30 @@ export default function ClientDashboard() {
     return upcomingVisits.length > 0 ? upcomingVisits[0] : null;
   }, [scheduledVisits]);
 
-  // Real-time countdown state
-  const [countdown, setCountdown] = useState<{
-    days: number;
-    hours: number;
-    minutes: number;
-    seconds: number;
-    totalDays: number;
-  } | null>(null);
-
-  // Update countdown every second
-  useEffect(() => {
-    if (!nextScheduledVisit) {
-      setCountdown(null);
-      return;
-    }
-
-    const updateCountdown = () => {
-      const now = new Date();
-      const visitDate = new Date(nextScheduledVisit.scheduledDate);
-      const diffTime = visitDate.getTime() - now.getTime();
-
-      if (diffTime <= 0) {
-        setCountdown(null);
-        return;
-      }
-
-      const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-      const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      setCountdown({ days, hours, minutes, seconds, totalDays });
-    };
-
-    // Update immediately
-    updateCountdown();
-
-    // Update every second
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
+  // Calculate days until next visit
+  const daysUntilNextVisit = useMemo(() => {
+    if (!nextScheduledVisit) return null;
+    
+    const now = new Date();
+    const visitDate = new Date(nextScheduledVisit.scheduledDate);
+    const diffTime = visitDate.getTime() - now.getTime();
+    
+    if (diffTime <= 0) return 0; // Today or past
+    
+    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return days;
   }, [nextScheduledVisit]);
 
   // Format countdown display
   const getCountdownDisplay = () => {
-    if (!countdown) return 'Nenhuma';
+    if (daysUntilNextVisit === null) return 'Nenhuma';
     
-    if (countdown.days > 0) {
-      return `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m`;
-    } else if (countdown.hours > 0) {
-      return `${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`;
-    } else if (countdown.minutes > 0) {
-      return `${countdown.minutes}m ${countdown.seconds}s`;
+    if (daysUntilNextVisit === 0) {
+      return 'Hoje';
+    } else if (daysUntilNextVisit === 1) {
+      return '1 dia';
     } else {
-      return `${countdown.seconds}s`;
+      return `${daysUntilNextVisit} dias`;
     }
   };
 
@@ -318,7 +286,7 @@ export default function ClientDashboard() {
             title="Próxima Visita"
             value={getCountdownDisplay()}
             icon={Clock}
-            variant={countdown !== null && countdown.totalDays <= 7 ? "danger" : countdown !== null ? "warning" : "primary"}
+            variant={daysUntilNextVisit !== null && daysUntilNextVisit <= 7 ? "danger" : daysUntilNextVisit !== null ? "warning" : "primary"}
           />
           <StatsCard
             title="Total de Visitas"

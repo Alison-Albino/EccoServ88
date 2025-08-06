@@ -315,7 +315,7 @@ export default function ProviderDashboard() {
                 </div>
                 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="visitDate">Data da Visita *</Label>
                   <Input
@@ -361,58 +361,58 @@ export default function ProviderDashboard() {
                     required
                   />
                 </div>
-                
-                <div>
-                  <Label htmlFor="clientId">Cliente *</Label>
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Buscar por nome ou CPF..."
-                        value={clientSearch}
-                        onChange={(e) => setClientSearch(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowClientSearch(!showClientSearch)}
-                      >
-                        <Search className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {(showClientSearch || clientSearch) && (
-                      <div className="border rounded-md max-h-40 overflow-y-auto">
-                        {clientsLoading ? (
-                          <div className="p-3 text-sm text-gray-500">Carregando clientes...</div>
-                        ) : clientsError ? (
-                          <div className="p-3 text-sm text-red-500">Erro ao carregar clientes</div>
-                        ) : filteredClients.length > 0 ? (
-                          filteredClients.map((client) => (
-                            <div
-                              key={client.id}
-                              className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
-                                visitForm.clientId === client.id ? 'bg-blue-50 border-blue-200' : ''
-                              }`}
-                              onClick={() => {
-                                setVisitForm({ ...visitForm, clientId: client.id, wellId: "" });
-                                setShowClientSearch(false);
-                                setClientSearch(client.user.name);
-                              }}
-                            >
-                              <div className="font-medium text-sm">{client.user.name}</div>
-                              <div className="text-xs text-gray-500">CPF: {client.cpf}</div>
-                              <div className="text-xs text-gray-500">{client.address}</div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-3 text-sm text-gray-500">
-                            {clientSearch ? 'Nenhum cliente encontrado para esta busca' : 'Nenhum cliente encontrado'}
-                          </div>
-                        )}
-                      </div>
-                    )}
+              </div>
+
+              <div>
+                <Label htmlFor="clientId">Cliente *</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Buscar por nome ou CPF..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowClientSearch(!showClientSearch)}
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
                   </div>
+                  {(showClientSearch || clientSearch) && (
+                    <div className="border rounded-md max-h-40 overflow-y-auto">
+                      {clientsLoading ? (
+                        <div className="p-3 text-sm text-gray-500">Carregando clientes...</div>
+                      ) : clientsError ? (
+                        <div className="p-3 text-sm text-red-500">Erro ao carregar clientes</div>
+                      ) : filteredClients.length > 0 ? (
+                        filteredClients.map((client) => (
+                          <div
+                            key={client.id}
+                            className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
+                              visitForm.clientId === client.id ? 'bg-blue-50 border-blue-200' : ''
+                            }`}
+                            onClick={() => {
+                              setVisitForm({ ...visitForm, clientId: client.id, wellId: "" });
+                              setShowClientSearch(false);
+                              setClientSearch(client.user.name);
+                            }}
+                          >
+                            <div className="font-medium text-sm">{client.user.name}</div>
+                            <div className="text-xs text-gray-500">CPF: {client.cpf}</div>
+                            <div className="text-xs text-gray-500">{client.address}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 text-sm text-gray-500">
+                          {clientSearch ? 'Nenhum cliente encontrado para esta busca' : 'Nenhum cliente encontrado'}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               

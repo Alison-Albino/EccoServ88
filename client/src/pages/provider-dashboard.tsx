@@ -297,8 +297,17 @@ export default function ProviderDashboard() {
                   <Input
                     id="visitDate"
                     type="date"
-                    value={visitForm.visitDate.split('T')[0] || visitForm.visitDate}
-                    onChange={(e) => setVisitForm({ ...visitForm, visitDate: e.target.value + (visitForm.visitDate.includes('T') ? visitForm.visitDate.split('T')[1] : 'T10:00') })}
+                    value={visitForm.visitDate ? visitForm.visitDate.split('T')[0] : ''}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      const currentTime = visitForm.visitDate && visitForm.visitDate.includes('T') 
+                        ? visitForm.visitDate.split('T')[1] 
+                        : '10:00';
+                      setVisitForm({ 
+                        ...visitForm, 
+                        visitDate: newDate ? `${newDate}T${currentTime}` : ''
+                      });
+                    }}
                     required
                   />
                 </div>
@@ -308,8 +317,19 @@ export default function ProviderDashboard() {
                   <Input
                     id="visitTime"
                     type="time"
-                    value={visitForm.visitDate.includes('T') ? visitForm.visitDate.split('T')[1] : '10:00'}
-                    onChange={(e) => setVisitForm({ ...visitForm, visitDate: (visitForm.visitDate.split('T')[0] || visitForm.visitDate) + 'T' + e.target.value })}
+                    value={visitForm.visitDate && visitForm.visitDate.includes('T') 
+                      ? visitForm.visitDate.split('T')[1] 
+                      : '10:00'}
+                    onChange={(e) => {
+                      const newTime = e.target.value;
+                      const currentDate = visitForm.visitDate && visitForm.visitDate.includes('T') 
+                        ? visitForm.visitDate.split('T')[0] 
+                        : new Date().toISOString().split('T')[0];
+                      setVisitForm({ 
+                        ...visitForm, 
+                        visitDate: `${currentDate}T${newTime}`
+                      });
+                    }}
                     required
                   />
                 </div>
@@ -398,8 +418,17 @@ export default function ProviderDashboard() {
                       <Input
                         id="nextVisitDate"
                         type="date"
-                        value={visitForm.nextVisitDate.split('T')[0] || visitForm.nextVisitDate}
-                        onChange={(e) => setVisitForm({ ...visitForm, nextVisitDate: e.target.value + (visitForm.nextVisitDate.includes('T') ? visitForm.nextVisitDate.split('T')[1] : 'T10:00') })}
+                        value={visitForm.nextVisitDate ? visitForm.nextVisitDate.split('T')[0] : ''}
+                        onChange={(e) => {
+                          const newDate = e.target.value;
+                          const currentTime = visitForm.nextVisitDate && visitForm.nextVisitDate.includes('T') 
+                            ? visitForm.nextVisitDate.split('T')[1] 
+                            : '10:00';
+                          setVisitForm({ 
+                            ...visitForm, 
+                            nextVisitDate: newDate ? `${newDate}T${currentTime}` : ''
+                          });
+                        }}
                       />
                     </div>
                     <div>
@@ -407,8 +436,19 @@ export default function ProviderDashboard() {
                       <Input
                         id="nextVisitTime"
                         type="time"
-                        value={visitForm.nextVisitDate.includes('T') ? visitForm.nextVisitDate.split('T')[1] : '10:00'}
-                        onChange={(e) => setVisitForm({ ...visitForm, nextVisitDate: (visitForm.nextVisitDate.split('T')[0] || visitForm.nextVisitDate) + 'T' + e.target.value })}
+                        value={visitForm.nextVisitDate && visitForm.nextVisitDate.includes('T') 
+                          ? visitForm.nextVisitDate.split('T')[1] 
+                          : '10:00'}
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          const currentDate = visitForm.nextVisitDate && visitForm.nextVisitDate.includes('T') 
+                            ? visitForm.nextVisitDate.split('T')[0] 
+                            : new Date().toISOString().split('T')[0];
+                          setVisitForm({ 
+                            ...visitForm, 
+                            nextVisitDate: `${currentDate}T${newTime}`
+                          });
+                        }}
                       />
                     </div>
                   </>
@@ -787,6 +827,7 @@ export default function ProviderDashboard() {
                         type="date"
                         value={visitFilters.startDate}
                         onChange={(e) => setVisitFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                        max={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                     
@@ -796,6 +837,8 @@ export default function ProviderDashboard() {
                         type="date"
                         value={visitFilters.endDate}
                         onChange={(e) => setVisitFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                        min={visitFilters.startDate || undefined}
+                        max={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                   </div>

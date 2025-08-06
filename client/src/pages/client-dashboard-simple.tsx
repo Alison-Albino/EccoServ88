@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImageViewer } from "@/components/image-viewer";
 
 export default function ClientDashboard() {
   const [visitFilters, setVisitFilters] = useState({
@@ -410,10 +411,15 @@ export default function ClientDashboard() {
                               </Button>
                             )}
                             {visit.photos && visit.photos.length > 0 && (
-                              <Button variant="outline" size="sm">
-                                <Camera className="h-4 w-4 mr-1" />
-                                Ver Fotos ({visit.photos.length})
-                              </Button>
+                              <ImageViewer 
+                                images={visit.photos} 
+                                trigger={
+                                  <Button variant="outline" size="sm">
+                                    <Camera className="h-4 w-4 mr-1" />
+                                    Ver Fotos ({visit.photos.length})
+                                  </Button>
+                                }
+                              />
                             )}
                           </div>
                         </div>

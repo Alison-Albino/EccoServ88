@@ -36,8 +36,16 @@ export default function ProviderDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get current date and time as default
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${now.toISOString().split('T')[0]}T${hours}:${minutes}`;
+  };
+
   const [visitForm, setVisitForm] = useState({
-    visitDate: "",
+    visitDate: getCurrentDateTime(),
     clientId: "",
     wellId: "",
     serviceType: "",
@@ -298,11 +306,12 @@ export default function ProviderDashboard() {
                     id="visitDate"
                     type="date"
                     value={visitForm.visitDate ? visitForm.visitDate.split('T')[0] : ''}
+                    max={new Date().toISOString().split('T')[0]}
                     onChange={(e) => {
                       const newDate = e.target.value;
                       const currentTime = visitForm.visitDate && visitForm.visitDate.includes('T') 
                         ? visitForm.visitDate.split('T')[1] 
-                        : '10:00';
+                        : new Date().toTimeString().slice(0,5);
                       setVisitForm({ 
                         ...visitForm, 
                         visitDate: newDate ? `${newDate}T${currentTime}` : ''
@@ -319,7 +328,10 @@ export default function ProviderDashboard() {
                     type="time"
                     value={visitForm.visitDate && visitForm.visitDate.includes('T') 
                       ? visitForm.visitDate.split('T')[1] 
-                      : '10:00'}
+                      : new Date().toTimeString().slice(0,5)}
+                    max={visitForm.visitDate && visitForm.visitDate.split('T')[0] === new Date().toISOString().split('T')[0] 
+                      ? new Date().toTimeString().slice(0,5) 
+                      : undefined}
                     onChange={(e) => {
                       const newTime = e.target.value;
                       const currentDate = visitForm.visitDate && visitForm.visitDate.includes('T') 
@@ -419,6 +431,7 @@ export default function ProviderDashboard() {
                         id="nextVisitDate"
                         type="date"
                         value={visitForm.nextVisitDate ? visitForm.nextVisitDate.split('T')[0] : ''}
+                        min={new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                         onChange={(e) => {
                           const newDate = e.target.value;
                           const currentTime = visitForm.nextVisitDate && visitForm.nextVisitDate.includes('T') 
@@ -693,7 +706,7 @@ export default function ProviderDashboard() {
                   className="px-6"
                   onClick={() => {
                     setVisitForm({
-                      visitDate: "",
+                      visitDate: getCurrentDateTime(),
                       clientId: "",
                       wellId: "",
                       serviceType: "",

@@ -61,27 +61,73 @@ export default function ClientDashboard() {
       return null;
     }
     
-    // Find the earliest upcoming visit
+    // Find the earliest upcoming visit (using 'scheduled' status)
     const upcomingVisits = scheduledVisits.scheduledVisits
-      .filter((visit: any) => visit.status === 'pending' && new Date(visit.scheduledDate) > new Date())
+      .filter((visit: any) => (visit.status === 'scheduled' || visit.status === 'pending') && new Date(visit.scheduledDate) > new Date())
       .sort((a: any, b: any) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
     
     console.log('Visitas futuras pendentes:', upcomingVisits);
     return upcomingVisits.length > 0 ? upcomingVisits[0] : null;
   }, [scheduledVisits]);
 
-  const daysUntilNextVisit = useMemo(() => {
-    console.log('Próxima visita encontrada:', nextScheduledVisit);
-    if (!nextScheduledVisit) return null;
-    
-    const now = new Date();
-    const visitDate = new Date(nextScheduledVisit.scheduledDate);
-    const diffTime = visitDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    console.log('Dias até próxima visita:', diffDays);
-    return diffDays;
+  // Real-time countdown state
+  const [countdown, setCountdown] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    totalDays: number;
+  } | null>(null);
+
+  // Update countdown every second
+  useEffect(() => {
+    if (!nextScheduledVisit) {
+      setCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const visitDate = new Date(nextScheduledVisit.scheduledDate);
+      const diffTime = visitDate.getTime() - now.getTime();
+
+      if (diffTime <= 0) {
+        setCountdown(null);
+        return;
+      }
+
+      const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
+      const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      setCountdown({ days, hours, minutes, seconds, totalDays });
+    };
+
+    // Update immediately
+    updateCountdown();
+
+    // Update every second
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
   }, [nextScheduledVisit]);
+
+  // Format countdown display
+  const getCountdownDisplay = () => {
+    if (!countdown) return 'Nenhuma';
+    
+    if (countdown.days > 0) {
+      return `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m`;
+    } else if (countdown.hours > 0) {
+      return `${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`;
+    } else if (countdown.minutes > 0) {
+      return `${countdown.minutes}m ${countdown.seconds}s`;
+    } else {
+      return `${countdown.seconds}s`;
+    }
+  };
 
   // Filter visits based on search criteria
   const filteredVisits = useMemo(() => {
@@ -270,9 +316,9 @@ export default function ClientDashboard() {
           />
           <StatsCard
             title="Próxima Visita"
-            value={daysUntilNextVisit !== null ? `${daysUntilNextVisit} ${daysUntilNextVisit === 1 ? 'dia' : 'dias'}` : 'Nenhuma'}
+            value={getCountdownDisplay()}
             icon={Clock}
-            variant={daysUntilNextVisit !== null && daysUntilNextVisit <= 7 ? "danger" : daysUntilNextVisit !== null ? "warning" : "primary"}
+            variant={countdown !== null && countdown.totalDays <= 7 ? "danger" : countdown !== null ? "warning" : "primary"}
           />
           <StatsCard
             title="Total de Visitas"

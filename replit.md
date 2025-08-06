@@ -68,9 +68,17 @@ Preferred communication style: Simple, everyday language.
   - Provider registration functionality
 
 ### External Dependencies
-- **Database**: Neon Database (PostgreSQL serverless)
+- **Database**: PostgreSQL (Neon serverless for development, regular PostgreSQL for production)
 - **UI Components**: Radix UI primitives for accessible component foundation
 - **Validation**: Zod for runtime type checking and form validation
 - **Date Handling**: date-fns for date formatting and manipulation
 - **Styling**: Tailwind CSS with class-variance-authority for component variants
 - **Development Tools**: Replit integration for development environment support
+- **Production Deployment**: PM2 for process management, Nginx for reverse proxy
+
+### Deployment Configuration
+- **VPS Ready**: Application configured for deployment outside Replit
+- **Production Files**: Optimized package.json and Vite config for VPS deployment
+- **Process Management**: PM2 ecosystem configuration for clustering and monitoring
+- **Environment Variables**: Complete .env.example with all required configurations
+- **Documentation**: Comprehensive deployment guide with step-by-step VPS setup instructions

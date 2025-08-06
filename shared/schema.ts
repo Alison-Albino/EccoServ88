@@ -54,6 +54,7 @@ export const visits = pgTable("visits", {
   observations: text("observations").notNull(),
   status: text("status").notNull().default('pending'), // 'pending', 'completed', 'in_progress', 'cancelled'
   photos: text("photos").array().default([]),
+  documents: text("documents").array().default([]),
   invoiceUrl: text("invoice_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });

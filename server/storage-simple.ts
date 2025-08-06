@@ -201,6 +201,7 @@ export class MemStorage implements IStorage {
       observations: "Manutenção preventiva realizada. Sistema funcionando perfeitamente.",
       status: "completed",
       photos: [],
+      documents: [],
       invoiceUrl: null,
       createdAt: "2024-01-20T14:00:00Z"
     };

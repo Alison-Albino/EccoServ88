@@ -15,13 +15,23 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    // Allow images and documents
+    if (file.mimetype.startsWith('image/') || 
+        file.mimetype === 'application/pdf' || 
+        file.mimetype.includes('document') ||
+        file.mimetype.includes('word')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error('Only images and documents are allowed'));
     }
   }
 });
+
+// Create fields for multiple types of uploads
+const uploadFields = upload.fields([
+  { name: 'photos', maxCount: 10 },
+  { name: 'documents', maxCount: 5 }
+]);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
@@ -220,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/visits", upload.array('photos', 10), async (req, res) => {
+  app.post("/api/visits", uploadFields, async (req, res) => {
     try {
       console.log('Received visit data:', req.body);
       
@@ -233,7 +243,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         nextVisitDate: req.body.nextVisitDate ? new Date(req.body.nextVisitDate) : null,
         observations: req.body.observations || '',
         status: req.body.status || 'completed',
-        photos: req.files ? (req.files as Express.Multer.File[]).map(file => file.filename) : []
+        photos: req.files && (req.files as any).photos ? (req.files as any).photos.map((file: Express.Multer.File) => file.filename) : [],
+        documents: req.files && (req.files as any).documents ? (req.files as any).documents.map((file: Express.Multer.File) => file.filename) : []
       };
       
       console.log('Processed visit data:', visitData);

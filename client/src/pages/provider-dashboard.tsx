@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock, Search, Filter, X } from "lucide-react";
+import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock, Search, Filter, X, FileText } from "lucide-react";
 import { ImageViewer } from "@/components/image-viewer";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +60,7 @@ export default function ProviderDashboard() {
   const [clientSearch, setClientSearch] = useState("");
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
+  const [documents, setDocuments] = useState<File[]>([]);
 
 
   
@@ -176,6 +177,7 @@ export default function ProviderDashboard() {
         waterParameters: [],
       });
       setPhotos([]);
+      setDocuments([]);
     },
     onError: (error) => {
       toast({
@@ -236,6 +238,10 @@ export default function ProviderDashboard() {
       formData.append('photos', photo);
     });
 
+    documents.forEach((document) => {
+      formData.append('documents', document);
+    });
+
     console.log('Enviando dados para o backend...');
     console.log('FormData contents:');
     formData.forEach((value, key) => {
@@ -247,6 +253,12 @@ export default function ProviderDashboard() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setPhotos(Array.from(e.target.files));
+    }
+  }
+
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setDocuments(Array.from(e.target.files));
     }
   };
 
@@ -738,6 +750,31 @@ export default function ProviderDashboard() {
                   </p>
                 )}
               </div>
+
+              <div>
+                <Label htmlFor="documents">Documentos (PDF, Boletos)</Label>
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer"
+                  onClick={() => document.getElementById('documents')?.click()}
+                >
+                  <FileText className="text-gray-400 text-3xl h-12 w-12 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-2">Clique para fazer upload ou arraste os documentos</p>
+                  <p className="text-gray-400 text-sm">PDF, DOC, DOCX até 10MB cada</p>
+                  <Input
+                    id="documents"
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleDocumentChange}
+                    className="hidden"
+                  />
+                </div>
+                {documents.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {documents.length} documento(s) selecionado(s)
+                  </p>
+                )}
+              </div>
               
               <div className="flex space-x-4">
                 <Button 
@@ -767,6 +804,7 @@ export default function ProviderDashboard() {
                       waterParameters: [],
                     });
                     setPhotos([]);
+                    setDocuments([]);
                     setClientSearch("");
                     setShowClientSearch(false);
                   }}

@@ -223,6 +223,66 @@ export class MemStorage implements IStorage {
     };
     this.invoices.set(invoice.id, invoice);
 
+    // Sample material usage data
+    const sampleMaterials = [
+      {
+        id: "material-1",
+        visitId: "2024/0001",
+        materialType: "Hipoclorito de sódio",
+        quantityGrams: "500",
+        notes: "Aplicado para desinfecção",
+        createdAt: "2024-08-04T14:30:00Z"
+      },
+      {
+        id: "material-2", 
+        visitId: "2024/0001",
+        materialType: "Sulfato de Alumínio",
+        quantityGrams: "300",
+        notes: "Usado para clarificação",
+        createdAt: "2024-08-04T14:30:00Z"
+      },
+      {
+        id: "material-3",
+        visitId: "2024/0001", 
+        materialType: "Cal hidratada (hidróxido de cálcio)",
+        quantityGrams: "200",
+        notes: "Correção de pH",
+        createdAt: "2024-08-04T14:30:00Z"
+      }
+    ];
+
+    sampleMaterials.forEach(material => {
+      this.materialUsage.set(material.id, material as MaterialUsage);
+    });
+
+    // Sample water quality parameters
+    const sampleWaterParams = [
+      {
+        id: "water-1",
+        visitId: "2024/0001",
+        parameter: "Cloro (livre ou total)",
+        value: "0.5",
+        unit: "mg/L",
+        status: "good",
+        notes: "Dentro dos padrões",
+        createdAt: "2024-08-04T14:30:00Z"
+      },
+      {
+        id: "water-2",
+        visitId: "2024/0001", 
+        parameter: "pH",
+        value: "7.2",
+        unit: "unidades pH",
+        status: "excellent",
+        notes: "Ideal para consumo",
+        createdAt: "2024-08-04T14:30:00Z"
+      }
+    ];
+
+    sampleWaterParams.forEach(param => {
+      this.waterQualityParameters.set(param.id, param as WaterQualityParameter);
+    });
+
     // Initialize counters based on existing data
     this.visitCounter = Math.max(...Array.from(this.visits.keys()).map(id => {
       const match = id.match(/\/(\d+)$/);

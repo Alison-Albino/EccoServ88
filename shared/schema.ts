@@ -233,15 +233,21 @@ export type VisitWithMaterials = VisitWithDetails & {
 
 // Constants for available materials
 export const AVAILABLE_MATERIALS = [
-  'Cloro (livre ou total)',
-  'pH',
-  'Dureza total (Ca, Mg)',
-  'Cloretos (Cl⁻)',
-  'Sulfatos (SO₄²⁻)',
-  'Fósforo total',
-  'Ferro (Fe)',
-  'Manganês (Mn)',
-  'Nitrogênio total (amônia, nitrato, nitrito)',
+  'Hipoclorito de sódio',
+  'Sulfato de Alumínio',
+  'Cloreto Férrico',
+  'Policloreto de Alumínio (PAC)',
+  'Cal hidratada (hidróxido de cálcio)',
+  'Soda cáustica (hidróxido de sódio)',
+  'Ácido sulfúrico',
+  'Ácido clorídrico',
+  'Carbonato de sódio (barrilha leve)',
+  'Carvão ativado',
+  'Permanganato de potássio',
+  'Cloro gás',
+  'Ozônio',
+  'Sulfato de cobre',
+  'Peróxido de hidrogênio',
 ] as const;
 
 export type AvailableMaterial = typeof AVAILABLE_MATERIALS[number];

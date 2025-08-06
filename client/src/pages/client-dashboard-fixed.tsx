@@ -37,13 +37,13 @@ export default function ClientDashboard() {
 
   // Get visits for this client
   const { data: visits, isLoading } = useQuery<any>({
-    queryKey: ["/api/visits/client", user?.client?.id],
+    queryKey: ["/api/clients", user?.client?.id, "visits"],
     enabled: !!user?.client?.id,
   });
 
   // Get scheduled visits for this client
   const { data: scheduledVisits, isLoading: isLoadingScheduled } = useQuery<any>({
-    queryKey: ["/api/scheduled-visits/client", user?.client?.id],
+    queryKey: ["/api/clients", user?.client?.id, "scheduled-visits"],
     enabled: !!user?.client?.id,
   });
 

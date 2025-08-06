@@ -141,9 +141,7 @@ export default function ProviderDashboard() {
   // Mutation to mark scheduled visit as completed
   const completeScheduledVisitMutation = useMutation({
     mutationFn: async (scheduledVisitId: string) => {
-      return apiRequest(`/api/scheduled-visits/${scheduledVisitId}/complete`, {
-        method: 'PATCH'
-      });
+      return apiRequest('PATCH', `/api/scheduled-visits/${scheduledVisitId}/complete`);
     },
     onSuccess: () => {
       toast({

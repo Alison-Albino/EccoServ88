@@ -54,7 +54,9 @@ export default function ClientDashboard() {
 
   // Calculate next visit countdown (moved before any conditional returns)
   const nextScheduledVisit = useMemo(() => {
+    console.log('Dados de visitas agendadas:', scheduledVisits);
     if (!scheduledVisits?.scheduledVisits || scheduledVisits.scheduledVisits.length === 0) {
+      console.log('Nenhuma visita agendada encontrada');
       return null;
     }
     
@@ -63,10 +65,12 @@ export default function ClientDashboard() {
       .filter((visit: any) => visit.status === 'pending' && new Date(visit.scheduledDate) > new Date())
       .sort((a: any, b: any) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
     
+    console.log('Visitas futuras pendentes:', upcomingVisits);
     return upcomingVisits.length > 0 ? upcomingVisits[0] : null;
   }, [scheduledVisits]);
 
   const daysUntilNextVisit = useMemo(() => {
+    console.log('Próxima visita encontrada:', nextScheduledVisit);
     if (!nextScheduledVisit) return null;
     
     const now = new Date();
@@ -74,6 +78,7 @@ export default function ClientDashboard() {
     const diffTime = visitDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    console.log('Dias até próxima visita:', diffDays);
     return diffDays;
   }, [nextScheduledVisit]);
 

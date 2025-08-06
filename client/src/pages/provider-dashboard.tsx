@@ -14,6 +14,7 @@ import { ImageViewer } from "@/components/image-viewer";
 import { DocumentViewer } from "@/components/document-viewer";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { type VisitWithDetails, type ScheduledVisitWithDetails, type VisitWithMaterials, AVAILABLE_MATERIALS, type AvailableMaterial, WATER_PARAMETERS, type WaterParameter } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";

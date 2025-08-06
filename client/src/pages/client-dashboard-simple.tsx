@@ -52,6 +52,31 @@ export default function ClientDashboard() {
     enabled: !!user?.client?.id,
   });
 
+  // Calculate next visit countdown (moved before any conditional returns)
+  const nextScheduledVisit = useMemo(() => {
+    if (!scheduledVisits?.scheduledVisits || scheduledVisits.scheduledVisits.length === 0) {
+      return null;
+    }
+    
+    // Find the earliest upcoming visit
+    const upcomingVisits = scheduledVisits.scheduledVisits
+      .filter((visit: any) => visit.status === 'pending' && new Date(visit.scheduledDate) > new Date())
+      .sort((a: any, b: any) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
+    
+    return upcomingVisits.length > 0 ? upcomingVisits[0] : null;
+  }, [scheduledVisits]);
+
+  const daysUntilNextVisit = useMemo(() => {
+    if (!nextScheduledVisit) return null;
+    
+    const now = new Date();
+    const visitDate = new Date(nextScheduledVisit.scheduledDate);
+    const diffTime = visitDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  }, [nextScheduledVisit]);
+
   // Filter visits based on search criteria
   const filteredVisits = useMemo(() => {
     if (!visits?.visits) return [];
@@ -164,30 +189,7 @@ export default function ClientDashboard() {
   const completedVisits = visits?.visits?.filter((v: any) => v.status === 'completed').length || 0;
   const scheduledVisitsCount = scheduledVisits?.scheduledVisits?.length || 0;
 
-  // Calculate next visit countdown
-  const nextScheduledVisit = useMemo(() => {
-    if (!scheduledVisits?.scheduledVisits || scheduledVisits.scheduledVisits.length === 0) {
-      return null;
-    }
-    
-    // Find the earliest upcoming visit
-    const upcomingVisits = scheduledVisits.scheduledVisits
-      .filter((visit: any) => visit.status === 'pending' && new Date(visit.scheduledDate) > new Date())
-      .sort((a: any, b: any) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
-    
-    return upcomingVisits.length > 0 ? upcomingVisits[0] : null;
-  }, [scheduledVisits]);
 
-  const daysUntilNextVisit = useMemo(() => {
-    if (!nextScheduledVisit) return null;
-    
-    const now = new Date();
-    const visitDate = new Date(nextScheduledVisit.scheduledDate);
-    const diffTime = visitDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
-  }, [nextScheduledVisit]);
 
   // Stats Card Component
   const StatsCard = ({ title, value, icon: Icon, variant }: any) => {
@@ -265,7 +267,7 @@ export default function ClientDashboard() {
             title="Próxima Visita"
             value={daysUntilNextVisit !== null ? `${daysUntilNextVisit} ${daysUntilNextVisit === 1 ? 'dia' : 'dias'}` : 'Nenhuma'}
             icon={Clock}
-            variant={daysUntilNextVisit !== null && daysUntilNextVisit <= 7 ? "danger" : daysUntilNextVisit !== null ? "warning" : "secondary"}
+            variant={daysUntilNextVisit !== null && daysUntilNextVisit <= 7 ? "danger" : daysUntilNextVisit !== null ? "warning" : "primary"}
           />
           <StatsCard
             title="Total de Visitas"

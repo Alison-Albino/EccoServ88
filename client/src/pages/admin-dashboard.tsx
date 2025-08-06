@@ -704,7 +704,7 @@ export default function AdminDashboard() {
                               trigger={
                                 <Button variant="outline" size="sm">
                                   <FileText className="h-4 w-4 mr-1" />
-                                  Ver Documentos ({visit.documents.length})
+                                  Baixar Documentos ({visit.documents.length})
                                 </Button>
                               }
                             />

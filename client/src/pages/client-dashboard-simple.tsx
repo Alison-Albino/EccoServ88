@@ -205,7 +205,7 @@ export default function ClientDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-3xl font-bold text-gray-900">{value}</p>
+            <p className="font-bold text-gray-900 text-[24px]">{value}</p>
           </div>
           <div className={`p-3 rounded-full ${variantClasses[variant] || variantClasses.primary}`}>
             <Icon className="h-6 w-6" />

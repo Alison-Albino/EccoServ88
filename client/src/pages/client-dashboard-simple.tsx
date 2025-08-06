@@ -226,7 +226,6 @@ export default function ClientDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">{user?.name}</span>
-              <span className="text-xs text-gray-500 capitalize">({user?.userType})</span>
               <Button 
                 variant="outline" 
                 size="sm"

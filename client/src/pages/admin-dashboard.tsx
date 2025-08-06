@@ -31,7 +31,28 @@ const providerRegisterSchema = z.object({
   specialties: z.string().min(1, "Especialidades são obrigatórias"),
 });
 
+const clientRegisterSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  cpf: z.string().min(11, "CPF é obrigatório"),
+  address: z.string().min(5, "Endereço é obrigatório"),
+  phone: z.string().min(1, "Telefone é obrigatório"),
+});
+
+const wellRegisterSchema = z.object({
+  clientId: z.string().min(1, "Cliente é obrigatório"),
+  name: z.string().min(2, "Nome do poço é obrigatório"),
+  type: z.string().min(1, "Tipo do poço é obrigatório"),
+  location: z.string().min(5, "Localização é obrigatória"),
+  depth: z.string().min(1, "Profundidade é obrigatória"),
+  diameter: z.string().min(1, "Diâmetro é obrigatório"),
+  installationDate: z.string().min(1, "Data de instalação é obrigatória"),
+  description: z.string().optional(),
+});
+
 type ProviderRegisterForm = z.infer<typeof providerRegisterSchema>;
+type ClientRegisterForm = z.infer<typeof clientRegisterSchema>;
+type WellRegisterForm = z.infer<typeof wellRegisterSchema>;
 
 interface AdminStats {
   totalClients: number;
@@ -64,6 +85,31 @@ export default function AdminDashboard() {
       password: "",
       phone: "",
       specialties: "",
+    },
+  });
+
+  const clientForm = useForm<ClientRegisterForm>({
+    resolver: zodResolver(clientRegisterSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      cpf: "",
+      address: "",
+      phone: "",
+    },
+  });
+
+  const wellForm = useForm<WellRegisterForm>({
+    resolver: zodResolver(wellRegisterSchema),
+    defaultValues: {
+      clientId: "",
+      name: "",
+      type: "",
+      location: "",
+      depth: "",
+      diameter: "",
+      installationDate: "",
+      description: "",
     },
   });
 
@@ -226,6 +272,83 @@ export default function AdminDashboard() {
     }
   };
 
+  // Client registration mutation
+  const registerClientMutation = useMutation({
+    mutationFn: async (data: ClientRegisterForm) => {
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          password: "123456", // Senha padrão
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao cadastrar cliente');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Cliente cadastrado com sucesso!",
+        description: "Cliente criado com senha padrão: 123456",
+      });
+      clientForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/clients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Erro ao cadastrar cliente",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Well registration mutation
+  const registerWellMutation = useMutation({
+    mutationFn: async (data: WellRegisterForm) => {
+      const wellData = {
+        ...data,
+        depth: parseFloat(data.depth),
+        diameter: parseFloat(data.diameter),
+        status: "active",
+      };
+      const response = await fetch('/api/wells', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(wellData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao cadastrar poço');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Poço cadastrado com sucesso!",
+        description: "O poço foi adicionado ao sistema.",
+      });
+      wellForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/wells'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Erro ao cadastrar poço",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     const variants = {
       active: { label: "Ativo", className: "bg-success/10 text-success" },
@@ -373,7 +496,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="visits">Visitas</TabsTrigger>
             <TabsTrigger value="scheduled">Agendamentos</TabsTrigger>
@@ -381,7 +504,9 @@ export default function AdminDashboard() {
             <TabsTrigger value="wells">Poços</TabsTrigger>
             <TabsTrigger value="materials">Materiais</TabsTrigger>
             <TabsTrigger value="providers">Prestadores</TabsTrigger>
-            <TabsTrigger value="register">Cadastrar</TabsTrigger>
+            <TabsTrigger value="register">Cadastrar Prestador</TabsTrigger>
+            <TabsTrigger value="register-client">Cadastrar Cliente</TabsTrigger>
+            <TabsTrigger value="register-well">Cadastrar Poço</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -1013,6 +1138,326 @@ export default function AdminDashboard() {
                       disabled={registerProviderMutation.isPending}
                     >
                       {registerProviderMutation.isPending ? "Cadastrando..." : "Cadastrar Prestador"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="register-client">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" />
+                  Cadastrar Novo Cliente
+                </CardTitle>
+                <CardDescription>
+                  Adicione um novo cliente ao sistema com senha padrão 123456
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...clientForm}>
+                  <form onSubmit={clientForm.handleSubmit((data) => registerClientMutation.mutate(data))} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={clientForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome Completo *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="João da Silva" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={clientForm.control}
+                        name="cpf"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CPF *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="000.000.000-00" 
+                                {...field}
+                                onChange={(e) => {
+                                  // Auto format CPF
+                                  let value = e.target.value.replace(/\D/g, '');
+                                  if (value.length <= 11) {
+                                    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                                    field.onChange(value);
+                                  }
+                                }}
+                                maxLength={14}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={clientForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="joao@email.com" type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={clientForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefone *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="(11) 99999-9999" 
+                                {...field}
+                                onChange={(e) => {
+                                  // Auto format phone
+                                  let value = e.target.value.replace(/\D/g, '');
+                                  if (value.length <= 11) {
+                                    if (value.length <= 10) {
+                                      value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                                    } else {
+                                      value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                    }
+                                    field.onChange(value);
+                                  }
+                                }}
+                                maxLength={15}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={clientForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Endereço Completo *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Rua das Flores, 123, Centro, São Paulo - SP, CEP: 01234-567" 
+                              {...field} 
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 text-sm font-semibold">i</span>
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-blue-800">Senha Padrão</h3>
+                          <p className="text-sm text-blue-700 mt-1">
+                            O cliente será criado com a senha padrão <strong>123456</strong>. 
+                            Ele poderá alterar a senha após o primeiro login.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={registerClientMutation.isPending}
+                    >
+                      {registerClientMutation.isPending ? "Cadastrando..." : "Cadastrar Cliente"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="register-well">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Droplet className="h-5 w-5" />
+                  Cadastrar Novo Poço
+                </CardTitle>
+                <CardDescription>
+                  Adicione um novo poço para um cliente existente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...wellForm}>
+                  <form onSubmit={wellForm.handleSubmit((data) => registerWellMutation.mutate(data))} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={wellForm.control}
+                        name="clientId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cliente *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o cliente..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {clients?.clients.map((client: any) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    {client.user.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={wellForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome do Poço *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: Poço Principal" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={wellForm.control}
+                        name="type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tipo do Poço *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o tipo..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="artesiano">Artesiano</SelectItem>
+                                <SelectItem value="semi-artesiano">Semi-artesiano</SelectItem>
+                                <SelectItem value="freático">Freático</SelectItem>
+                                <SelectItem value="tubular">Tubular</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={wellForm.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Localização *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Endereço completo do poço" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={wellForm.control}
+                        name="depth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Profundidade (m) *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="100" type="number" step="0.1" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={wellForm.control}
+                        name="diameter"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Diâmetro (cm) *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="15" type="number" step="0.1" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={wellForm.control}
+                        name="installationDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data de Instalação *</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={wellForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrição (Opcional)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Observações sobre o poço..." 
+                              {...field} 
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={registerWellMutation.isPending}
+                    >
+                      {registerWellMutation.isPending ? "Cadastrando..." : "Cadastrar Poço"}
                     </Button>
                   </form>
                 </Form>

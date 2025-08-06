@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageViewer } from "@/components/image-viewer";
+import { DocumentViewer } from "@/components/document-viewer";
 
 export default function ClientDashboard() {
   const [visitFilters, setVisitFilters] = useState({
@@ -449,6 +450,17 @@ export default function ClientDashboard() {
                                   <Button variant="outline" size="sm">
                                     <Camera className="h-4 w-4 mr-1" />
                                     Ver Fotos ({visit.photos.length})
+                                  </Button>
+                                }
+                              />
+                            )}
+                            {visit.documents && visit.documents.length > 0 && (
+                              <DocumentViewer 
+                                documents={visit.documents} 
+                                trigger={
+                                  <Button variant="outline" size="sm">
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    Ver Documentos ({visit.documents.length})
                                   </Button>
                                 }
                               />

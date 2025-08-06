@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { CloudUpload, Wrench, Camera, Fan, Cog, Plus, FlaskConical, Calendar, Clock, Search, Filter, X, FileText } from "lucide-react";
 import { ImageViewer } from "@/components/image-viewer";
+import { DocumentViewer } from "@/components/document-viewer";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type VisitWithDetails, type ScheduledVisitWithDetails, type VisitWithMaterials, AVAILABLE_MATERIALS, type AvailableMaterial, WATER_PARAMETERS, type WaterParameter } from "@shared/schema";
@@ -881,12 +882,20 @@ export default function ProviderDashboard() {
                             </span>
                           )}
                         </div>
-                        {visit.photos && visit.photos.length > 0 && (
-                          <ImageViewer 
-                            images={visit.photos} 
-                            className="text-xs"
-                          />
-                        )}
+                        <div className="flex space-x-2">
+                          {visit.photos && visit.photos.length > 0 && (
+                            <ImageViewer 
+                              images={visit.photos} 
+                              className="text-xs"
+                            />
+                          )}
+                          {visit.documents && visit.documents.length > 0 && (
+                            <DocumentViewer 
+                              documents={visit.documents} 
+                              className="text-xs"
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

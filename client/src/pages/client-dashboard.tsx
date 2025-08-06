@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { ImageViewer } from "@/components/image-viewer";
+import { DocumentViewer } from "@/components/document-viewer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -626,11 +627,14 @@ export default function ClientDashboard() {
                         
                         <p className="text-sm text-gray-700 mb-3">{visit.observations}</p>
                         
-                        {visit.photos && visit.photos.length > 0 && (
-                          <div className="flex justify-end">
+                        <div className="flex justify-end space-x-2">
+                          {visit.photos && visit.photos.length > 0 && (
                             <ImageViewer images={visit.photos} className="text-sm" />
-                          </div>
-                        )}
+                          )}
+                          {visit.documents && visit.documents.length > 0 && (
+                            <DocumentViewer documents={visit.documents} className="text-sm" />
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

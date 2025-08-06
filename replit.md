@@ -22,7 +22,7 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express.js framework
 - **Language**: TypeScript with ES modules
 - **API Design**: RESTful API with role-based endpoints
-- **File Uploads**: Multer middleware for handling image uploads (visit photos)
+- **File Uploads**: Multer middleware for handling image and document uploads (visit photos and documents)
 - **Error Handling**: Centralized error handling with status codes and JSON responses
 - **Development**: Hot reload with Vite integration in development mode
 
@@ -55,8 +55,8 @@ Preferred communication style: Simple, everyday language.
 - **Landing Page** (`/`): Modern homepage with user type selection and feature overview
 - **Registration Page** (`/register`): Multi-step registration for clients and providers with conditional fields
 - **Login Page** (`/login`): Authentication with role-based dashboard redirection
-- **Client Dashboard**: Well management, visit history, and scheduled visits viewing
-- **Provider Dashboard**: Visit creation with materials/water tracking, scheduling, and comprehensive reporting
+- **Client Dashboard**: Well management, visit history, scheduled visits viewing, and document/photo access
+- **Provider Dashboard**: Visit creation with materials/water tracking, scheduling, comprehensive reporting, and document/photo uploads
 - **Admin Dashboard**: Complete system oversight with:
   - Real-time statistics (clients, providers, wells, visits, scheduled visits)
   - All visits from all providers and clients with filtering

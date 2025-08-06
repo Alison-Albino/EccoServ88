@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Navbar from "@/components/Navbar";
 import StatsCard from "@/components/StatsCard";
+import { DocumentViewer } from "@/components/document-viewer";
 
 export default function ClientDashboard() {
   const [visitFilters, setVisitFilters] = useState({
@@ -344,6 +345,17 @@ export default function ClientDashboard() {
                                 <Camera className="h-4 w-4 mr-1" />
                                 Ver Fotos ({visit.photos.length})
                               </Button>
+                            )}
+                            {visit.documents && visit.documents.length > 0 && (
+                              <DocumentViewer 
+                                documents={visit.documents} 
+                                trigger={
+                                  <Button variant="outline" size="sm">
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    Ver Documentos ({visit.documents.length})
+                                  </Button>
+                                }
+                              />
                             )}
                           </div>
                         </div>

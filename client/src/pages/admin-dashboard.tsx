@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ImageViewer } from "@/components/image-viewer";
+import { DocumentViewer } from "@/components/document-viewer";
 import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity, Trash2, Key, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -682,25 +683,34 @@ export default function AdminDashboard() {
                         </div>
                       )}
                       
-                      {visit.photos && visit.photos.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-900 mb-2">Fotos da Visita ({visit.photos.length})</p>
-                          <div className="flex space-x-2">
-                            {visit.photos.map((photo, index) => (
-                              <div key={index} className="relative">
-                                <img
-                                  src={`/uploads/${photo}`}
-                                  alt={`Foto ${index + 1}`}
-                                  className="w-20 h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80"
-                                  onClick={() => {
-                                    // Implementar visualização de imagem
-                                  }}
-                                />
-                              </div>
-                            ))}
+                      <div className="flex space-x-4 mb-4">
+                        {visit.photos && visit.photos.length > 0 && (
+                          <div className="flex-1">
+                            <ImageViewer 
+                              images={visit.photos} 
+                              trigger={
+                                <Button variant="outline" size="sm">
+                                  <Camera className="h-4 w-4 mr-1" />
+                                  Ver Fotos ({visit.photos.length})
+                                </Button>
+                              }
+                            />
                           </div>
-                        </div>
-                      )}
+                        )}
+                        {visit.documents && visit.documents.length > 0 && (
+                          <div className="flex-1">
+                            <DocumentViewer 
+                              documents={visit.documents} 
+                              trigger={
+                                <Button variant="outline" size="sm">
+                                  <FileText className="h-4 w-4 mr-1" />
+                                  Ver Documentos ({visit.documents.length})
+                                </Button>
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                   

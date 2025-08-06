@@ -21,22 +21,36 @@ export function DocumentViewer({ documents, trigger, className = "" }: DocumentV
   );
 
   const handleDownload = (documentName: string) => {
+    // Extrair nome original removendo timestamp
+    const originalName = documentName.includes('_') ? 
+      documentName.substring(documentName.indexOf('_') + 1) : 
+      documentName;
+    
     // Download do documento mantendo formato original
     const link = window.document.createElement('a');
     link.href = `/uploads/${documentName}`;
-    link.download = documentName;
+    link.download = originalName;
     link.style.display = 'none';
     window.document.body.appendChild(link);
     link.click();
     window.document.body.removeChild(link);
   };
 
+  const getOriginalName = (filename: string) => {
+    // Extrair nome original removendo timestamp
+    return filename.includes('_') ? 
+      filename.substring(filename.indexOf('_') + 1) : 
+      filename;
+  };
+
   const getFileExtension = (filename: string) => {
-    return filename.split('.').pop()?.toUpperCase() || 'DOC';
+    const originalName = getOriginalName(filename);
+    return originalName.split('.').pop()?.toUpperCase() || 'DOC';
   };
 
   const getFileIcon = (filename: string) => {
-    const ext = filename.split('.').pop()?.toLowerCase();
+    const originalName = getOriginalName(filename);
+    const ext = originalName.split('.').pop()?.toLowerCase();
     switch (ext) {
       case 'pdf':
         return '📄';
@@ -71,7 +85,7 @@ export function DocumentViewer({ documents, trigger, className = "" }: DocumentV
               <div className="flex items-center space-x-3">
                 <div className="text-2xl">{getFileIcon(document)}</div>
                 <div>
-                  <p className="font-medium text-sm">{document}</p>
+                  <p className="font-medium text-sm">{getOriginalName(document)}</p>
                   <p className="text-xs text-gray-500">
                     Arquivo {getFileExtension(document)} • Clique para baixar
                   </p>

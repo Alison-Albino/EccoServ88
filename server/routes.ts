@@ -10,7 +10,16 @@ import express from "express";
 
 // Configure multer for file uploads
 const upload = multer({
-  dest: 'uploads/',
+  storage: multer.diskStorage({
+    destination: 'uploads/',
+    filename: (req, file, cb) => {
+      // Preservar nome original com timestamp para evitar conflitos
+      const timestamp = Date.now();
+      const originalName = file.originalname;
+      const safeName = originalName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      cb(null, `${timestamp}_${safeName}`);
+    }
+  }),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },

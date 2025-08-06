@@ -1116,7 +1116,14 @@ export default function AdminDashboard() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Digite o email" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="Digite o email" 
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value.toLowerCase());
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1246,7 +1253,14 @@ export default function AdminDashboard() {
                           <FormItem>
                             <FormLabel>Email *</FormLabel>
                             <FormControl>
-                              <Input placeholder="joao@email.com" type="email" {...field} />
+                              <Input 
+                                placeholder="joao@email.com" 
+                                type="email" 
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value.toLowerCase());
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

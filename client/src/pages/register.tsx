@@ -141,7 +141,14 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Digite seu email" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder="Digite seu email" 
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e.target.value.toLowerCase());
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

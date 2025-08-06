@@ -74,7 +74,7 @@ export default function Login() {
                 type="email"
                 placeholder="seu@email.com"
                 value={credentials.email}
-                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                onChange={(e) => setCredentials({ ...credentials, email: e.target.value.toLowerCase() })}
                 required
                 className="mt-2"
               />

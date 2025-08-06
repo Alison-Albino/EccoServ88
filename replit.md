@@ -32,6 +32,7 @@ Preferred communication style: Simple, everyday language.
 - **Connection**: DATABASE_URL environment variable configured for easy .env integration
 - **Storage Strategy**: In-memory storage with interface for seamless database migration (DatabaseStorage class available in server/storage.ts)
 - **Migration Ready**: `npm run db:push` command available for schema deployment
+- **Document Storage**: Support for PDF, DOC, DOCX file uploads in visits with validation
 
 ### Authentication and Authorization
 - **Strategy**: Simple email/password authentication with user type differentiation
@@ -41,11 +42,11 @@ Preferred communication style: Simple, everyday language.
 - **Provider Registration**: Only administrators can register new service providers (clients can self-register)
 
 ### Data Models
-- **Users**: Base user entity with email, password, name, and user type
+- **Users**: Base user entity with email (lowercase only), password, name, and user type
 - **Clients**: Extended user profile with address and phone for well owners
 - **Wells**: Client-owned assets with location, type, and status tracking
 - **Providers**: Service technicians with specialties and contact information
-- **Visits**: Service appointments linking providers to wells with observations, photos, and status
+- **Visits**: Service appointments linking providers to wells with observations, photos, documents, and status
 - **Scheduled Visits**: Future appointments with automatic scheduling from completed visits
 - **Material Usage**: Tracking of materials consumed during visits with quantities
 - **Water Parameters**: Water quality measurements with status indicators

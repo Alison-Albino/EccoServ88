@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ImageViewer } from "@/components/image-viewer";
-import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, AlertTriangle, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity, Trash2, Key, Calendar } from "lucide-react";
+import { Users, Droplet, Bolt, CalendarCheck, Check, UserPlus, Clock, FileText, BarChart3, CheckCircle, FlaskConical, Search, MapPin, Camera, TrendingUp, Wrench, Activity, Trash2, Key, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
   const pendingVisits = visits?.visits.filter(v => v.status === 'pending').length || 0;
   const inProgressVisits = visits?.visits.filter(v => v.status === 'in_progress').length || 0;
   const activeWells = wells?.wells.filter(w => w.status === 'active').length || 0;
-  const problemWells = wells?.wells.filter(w => w.status === 'problem').length || 0;
+
   const totalScheduled = scheduledVisits?.scheduledVisits?.length || 0;
 
   // Manual refresh function
@@ -502,12 +502,7 @@ export default function AdminDashboard() {
             icon={Calendar}
             variant="warning"
           />
-          <StatsCard
-            title="Poços com Problemas"
-            value={problemWells}
-            icon={AlertTriangle}
-            variant="error"
-          />
+
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">

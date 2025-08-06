@@ -502,6 +502,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark scheduled visit as completed
+  app.patch("/api/scheduled-visits/:id/complete", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Update the scheduled visit status to completed
+      await storage.updateScheduledVisitStatus(id, 'completed');
+      
+      res.json({ message: "Agendamento marcado como concluído" });
+    } catch (error) {
+      console.error('Complete scheduled visit error:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   app.get("/api/admin/materials/all-consumption", async (req, res) => {
     try {
       // Get all visits with details to access material usage

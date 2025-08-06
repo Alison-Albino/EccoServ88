@@ -62,6 +62,10 @@ export default function ProviderDashboard() {
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [documents, setDocuments] = useState<File[]>([]);
+  
+  // States for scheduled visit confirmation workflow
+  const [scheduledVisitToComplete, setScheduledVisitToComplete] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('visits');
 
 
   
@@ -133,6 +137,32 @@ export default function ProviderDashboard() {
 
 
 
+  // Mutation to mark scheduled visit as completed
+  const completeScheduledVisitMutation = useMutation({
+    mutationFn: async (scheduledVisitId: string) => {
+      return apiRequest(`/api/scheduled-visits/${scheduledVisitId}/complete`, {
+        method: 'PATCH'
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Agendamento finalizado!",
+        description: "O agendamento foi marcado como concluído.",
+      });
+      
+      // Invalidate scheduled visits to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/providers', user?.provider?.id, 'scheduled-visits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/scheduled-visits'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao finalizar agendamento.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createVisitMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       // Use fetch directly for FormData to avoid JSON conversion
@@ -179,6 +209,12 @@ export default function ProviderDashboard() {
       });
       setPhotos([]);
       setDocuments([]);
+      
+      // If this visit was created from a scheduled visit, mark it as completed
+      if (scheduledVisitToComplete) {
+        completeScheduledVisitMutation.mutate(scheduledVisitToComplete);
+        setScheduledVisitToComplete(null);
+      }
     },
     onError: (error) => {
       toast({
@@ -305,14 +341,43 @@ export default function ProviderDashboard() {
     !visitForm.clientId || well.clientId === visitForm.clientId
   ) || [];
 
-
+  // Function to handle confirming a scheduled visit
+  const handleConfirmVisit = (scheduledVisit: ScheduledVisitWithDetails) => {
+    // Pre-fill the form with scheduled visit data
+    setVisitForm({
+      visitDate: getCurrentDateTime(), // Current time for actual visit
+      clientId: scheduledVisit.well.clientId,
+      wellId: scheduledVisit.wellId,
+      serviceType: scheduledVisit.serviceType,
+      visitType: "unique", // Default to unique since it's from a scheduled visit
+      nextVisitDate: "",
+      observations: `Visita confirmada do agendamento: ${scheduledVisit.notes || 'Visita agendada'}`,
+      materials: [],
+      waterParameters: [],
+    });
+    
+    // Store the scheduled visit ID to mark as completed after visit registration
+    setScheduledVisitToComplete(scheduledVisit.id);
+    
+    // Clear any existing files
+    setPhotos([]);
+    setDocuments([]);
+    
+    // Switch to register tab
+    setActiveTab('visits');
+    
+    toast({
+      title: "Agendamento confirmado!",
+      description: "Preencha os detalhes da visita realizada.",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <Tabs defaultValue="visits" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="visits">Registrar Visita</TabsTrigger>
             <TabsTrigger value="my-visits">Minhas Visitas</TabsTrigger>
@@ -1176,7 +1241,11 @@ export default function ProviderDashboard() {
                           
                           <div className="flex justify-end space-x-2">
                             {scheduledVisit.status === 'scheduled' && (
-                              <Button size="sm" variant="outline">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleConfirmVisit(scheduledVisit)}
+                              >
                                 <Clock className="h-4 w-4 mr-1" />
                                 Confirmar Visita
                               </Button>

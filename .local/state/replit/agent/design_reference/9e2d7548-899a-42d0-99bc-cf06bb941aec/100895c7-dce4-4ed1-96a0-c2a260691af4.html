@@ -1,0 +1,704 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EccoServ - Gestão de Poços Artesianos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#2563EB',
+                        'primary-dark': '#1E40AF',
+                        'success': '#10B981',
+                        'warning': '#F59E0B',
+                        'error': '#EF4444',
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- @COMPONENT: AppContainer -->
+    <div id="app" class="min-h-screen">
+        
+        <!-- @COMPONENT: LoginScreen [initial view] -->
+        <!-- @STATE: currentView:string = 'login' -->
+        <div id="login-screen" class="min-h-screen bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+                <div class="text-center mb-8">
+                    <div class="mx-auto w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-tint text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900">EccoServ</h1>
+                    <p class="text-gray-600 mt-2">Gestão de Poços Artesianos</p>
+                </div>
+                
+                <form class="space-y-6" data-event="submit:handleLogin">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors" placeholder="seu@email.com" data-bind="auth.email" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                        <input type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors" placeholder="••••••••" data-bind="auth.password" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Usuário</label>
+                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors" data-bind="auth.userType" required>
+                            <option value="">Selecione...</option>
+                            <option value="client">Cliente</option>
+                            <option value="provider">Prestador de Serviço</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200" data-implementation="Should validate credentials and redirect to appropriate dashboard">
+                        Entrar
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <a href="#" class="text-primary hover:text-primary-dark text-sm font-medium">Esqueceu sua senha?</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: ClientDashboard [client view] -->
+        <div id="client-dashboard" class="hidden min-h-screen bg-gray-50">
+            <!-- @COMPONENT: Navbar -->
+            <nav class="bg-white shadow-sm border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 flex items-center">
+                                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-tint text-white text-sm"></i>
+                                </div>
+                                <span class="ml-2 text-xl font-bold text-gray-900">EccoServ</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-700" data-bind="user.name">João Silva</span>
+                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-gray-600 text-sm"></i>
+                            </div>
+                            <button class="text-gray-500 hover:text-gray-700" data-event="click:logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <!-- @COMPONENT: ClientStats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tint text-primary"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Poços Ativos</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.activeWells">3</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Última Manutenção</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.lastMaintenance">15 dias</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-warning"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Próxima Visita</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.nextVisit">7 dias</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- @COMPONENT: ServiceHistory -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-semibold text-gray-900">Histórico de Serviços</h2>
+                            <div class="flex space-x-2">
+                                <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>Todos os poços</option>
+                                    <option data-mock="true">Poço 01 - Residencial</option>
+                                    <option data-mock="true">Poço 02 - Industrial</option>
+                                    <option data-mock="true">Poço 03 - Agrícola</option>
+                                </select>
+                                <input type="date" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poço</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serviço</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prestador</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- @MAP: serviceHistory.map(service => ( -->
+                                <tr data-mock="true">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15/12/2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Poço 01 - Residencial</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Manutenção Preventiva</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Carlos Santos</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">Concluído</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <div class="flex space-x-2">
+                                            <button class="text-primary hover:text-primary-dark" data-event="click:copyBoleto" title="Copiar link do boleto">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                            <button class="text-primary hover:text-primary-dark" data-event="click:openBoleto" title="Abrir boleto">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr data-mock="true">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">01/12/2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Poço 02 - Industrial</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Limpeza</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Maria Oliveira</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-warning/10 text-warning">Em Andamento</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span class="text-gray-400">Pendente</span>
+                                    </td>
+                                </tr>
+                                <tr data-mock="true">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">20/11/2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Poço 03 - Agrícola</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Instalação de Bomba</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Pedro Lima</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">Concluído</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <div class="flex space-x-2">
+                                            <button class="text-primary hover:text-primary-dark" data-event="click:copyBoleto" title="Copiar link do boleto">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                            <button class="text-primary hover:text-primary-dark" data-event="click:openBoleto" title="Abrir boleto">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: ProviderDashboard [provider view] -->
+        <div id="provider-dashboard" class="hidden min-h-screen bg-gray-50">
+            <!-- @COMPONENT: Navbar -->
+            <nav class="bg-white shadow-sm border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 flex items-center">
+                                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-tint text-white text-sm"></i>
+                                </div>
+                                <span class="ml-2 text-xl font-bold text-gray-900">EccoServ</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-700" data-bind="user.name">Carlos Santos</span>
+                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-gray-600 text-sm"></i>
+                            </div>
+                            <button class="text-gray-500 hover:text-gray-700" data-event="click:logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- @COMPONENT: NewVisitForm -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Registrar Nova Visita</h2>
+                        </div>
+                        
+                        <form class="p-6 space-y-6" data-event="submit:handleNewVisit">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data da Visita *</label>
+                                    <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="visit.date" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="visit.clientId" required>
+                                        <option value="">Selecione o cliente...</option>
+                                        <option value="1" data-mock="true">João Silva</option>
+                                        <option value="2" data-mock="true">Maria Santos</option>
+                                        <option value="3" data-mock="true">Pedro Oliveira</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Poço *</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="visit.wellId" required>
+                                    <option value="">Selecione o poço...</option>
+                                    <option value="1" data-mock="true">Poço 01 - Residencial</option>
+                                    <option value="2" data-mock="true">Poço 02 - Industrial</option>
+                                    <option value="3" data-mock="true">Poço 03 - Agrícola</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Serviço *</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="visit.serviceType" required>
+                                    <option value="">Selecione o serviço...</option>
+                                    <option value="manutencao-preventiva">Manutenção Preventiva</option>
+                                    <option value="manutencao-corretiva">Manutenção Corretiva</option>
+                                    <option value="limpeza">Limpeza</option>
+                                    <option value="instalacao">Instalação</option>
+                                    <option value="reparo">Reparo</option>
+                                    <option value="inspecao">Inspeção</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Observações *</label>
+                                <textarea rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Descreva os serviços realizados, condições encontradas, materiais utilizados..." data-bind="visit.observations" required></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Fotos do Serviço</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors" data-implementation="Implement file upload functionality">
+                                    <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-4"></i>
+                                    <p class="text-gray-600 mb-2">Clique para fazer upload ou arraste as fotos</p>
+                                    <p class="text-gray-400 text-sm">PNG, JPG até 10MB cada</p>
+                                    <input type="file" multiple accept="image/*" class="hidden" data-bind="visit.photos">
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-4">
+                                <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200">
+                                    Registrar Visita
+                                </button>
+                                <button type="button" class="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-200" data-event="click:clearForm">
+                                    Limpar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- @COMPONENT: RecentVisits -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Minhas Visitas Recentes</h2>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <!-- @MAP: recentVisits.map(visit => ( -->
+                                <div class="border border-gray-200 rounded-lg p-4" data-mock="true">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-900">João Silva - Poço 01</h4>
+                                            <p class="text-sm text-gray-600">15/12/2023</p>
+                                        </div>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">Concluído</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-3">Manutenção preventiva realizada conforme programação. Sistema funcionando normalmente.</p>
+                                    <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                        <span><i class="fas fa-wrench mr-1"></i>Manutenção Preventiva</span>
+                                        <span><i class="fas fa-camera mr-1"></i>3 fotos</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="border border-gray-200 rounded-lg p-4" data-mock="true">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-900">Maria Santos - Poço 02</h4>
+                                            <p class="text-sm text-gray-600">10/12/2023</p>
+                                        </div>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-warning/10 text-warning">Em Análise</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-3">Limpeza do poço e verificação dos componentes. Identificada necessidade de troca de filtros.</p>
+                                    <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                        <span><i class="fas fa-broom mr-1"></i>Limpeza</span>
+                                        <span><i class="fas fa-camera mr-1"></i>5 fotos</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="border border-gray-200 rounded-lg p-4" data-mock="true">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-900">Pedro Oliveira - Poço 03</h4>
+                                            <p class="text-sm text-gray-600">05/12/2023</p>
+                                        </div>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">Concluído</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-3">Instalação de nova bomba submersível. Teste de funcionamento realizado com sucesso.</p>
+                                    <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                        <span><i class="fas fa-cog mr-1"></i>Instalação</span>
+                                        <span><i class="fas fa-camera mr-1"></i>7 fotos</span>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: AdminDashboard [admin view] -->
+        <div id="admin-dashboard" class="hidden min-h-screen bg-gray-50">
+            <!-- @COMPONENT: Navbar -->
+            <nav class="bg-white shadow-sm border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 flex items-center">
+                                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-tint text-white text-sm"></i>
+                                </div>
+                                <span class="ml-2 text-xl font-bold text-gray-900">EccoServ</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-700" data-bind="user.name">Administrador</span>
+                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-shield text-gray-600 text-sm"></i>
+                            </div>
+                            <button class="text-gray-500 hover:text-gray-700" data-event="click:logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <!-- @COMPONENT: AdminStats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-users text-primary"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Clientes</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.totalClients">25</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tint text-success"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Poços</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.totalWells">68</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tools text-warning"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Prestadores</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.totalProviders">8</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-error/10 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calendar-check text-error"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Visitas Mês</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="stats.monthlyVisits">142</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- @COMPONENT: RecentActivity -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Atividade Recente</h2>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <!-- @MAP: recentActivity.map(activity => ( -->
+                                <div class="flex items-start space-x-3" data-mock="true">
+                                    <div class="w-8 h-8 bg-success/10 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-success text-xs"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            <strong>Carlos Santos</strong> completou manutenção no Poço 01 de <strong>João Silva</strong>
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">Há 2 horas</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3" data-mock="true">
+                                    <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user-plus text-primary text-xs"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            Novo cliente <strong>Ana Costa</strong> foi cadastrado no sistema
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">Há 4 horas</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3" data-mock="true">
+                                    <div class="w-8 h-8 bg-warning/10 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-clock text-warning text-xs"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            <strong>Maria Oliveira</strong> agendou visita para Poço 02 - Industrial
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">Há 6 horas</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3" data-mock="true">
+                                    <div class="w-8 h-8 bg-error/10 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-exclamation text-error text-xs"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            Poço 05 necessita manutenção urgente - <strong>Pedro Lima</strong>
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">Há 1 dia</p>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- @COMPONENT: WellsStatus -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Status dos Poços</h2>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <!-- @MAP: wellsStatus.map(well => ( -->
+                                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-tint text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">Poço 01 - João Silva</h4>
+                                            <p class="text-sm text-gray-600">Última manutenção: 15/12/2023</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">Ativo</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-tint text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">Poço 02 - Maria Santos</h4>
+                                            <p class="text-sm text-gray-600">Última manutenção: 01/12/2023</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-warning/10 text-warning">Manutenção</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-tint text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">Poço 03 - Pedro Oliveira</h4>
+                                            <p class="text-sm text-gray-600">Última manutenção: 20/11/2023</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success/10 text-success">Ativo</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-tint text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-gray-900">Poço 04 - Ana Costa</h4>
+                                            <p class="text-sm text-gray-600">Última manutenção: 15/11/2023</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-error/10 text-error">Atenção</span>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: AppContainer -->
+
+    <script>
+        // TODO: Implement proper state management, routing, and API integration
+        (function() {
+            // Demo navigation between views
+            let currentView = 'login';
+            let currentUserType = null;
+
+            // Demo user data
+            const demoUsers = {
+                client: { email: 'cliente@exemplo.com', password: '123456', name: 'João Silva' },
+                provider: { email: 'prestador@exemplo.com', password: '123456', name: 'Carlos Santos' },
+                admin: { email: 'admin@exemplo.com', password: '123456', name: 'Administrador' }
+            };
+
+            function showView(viewId) {
+                // Hide all views
+                document.querySelectorAll('#app > div').forEach(div => {
+                    div.classList.add('hidden');
+                });
+                
+                // Show selected view
+                const targetView = document.getElementById(viewId);
+                if (targetView) {
+                    targetView.classList.remove('hidden');
+                    currentView = viewId.replace('-dashboard', '').replace('-screen', '');
+                }
+            }
+
+            // Handle login form submission
+            document.addEventListener('submit', function(e) {
+                if (e.target.closest('#login-screen form')) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(e.target);
+                    const email = e.target.querySelector('input[type="email"]').value;
+                    const userType = e.target.querySelector('select').value;
+                    
+                    // Demo authentication
+                    if (userType && demoUsers[userType] && email === demoUsers[userType].email) {
+                        currentUserType = userType;
+                        showView(userType + '-dashboard');
+                    } else {
+                        alert('Credenciais inválidas! Use:\nCliente: cliente@exemplo.com\nPrestador: prestador@exemplo.com\nAdmin: admin@exemplo.com\nSenha: 123456');
+                    }
+                }
+            });
+
+            // Handle logout
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="logout"]')) {
+                    e.preventDefault();
+                    currentUserType = null;
+                    showView('login-screen');
+                    
+                    // Clear form
+                    const loginForm = document.querySelector('#login-screen form');
+                    if (loginForm) loginForm.reset();
+                }
+            });
+
+            // Handle boleto actions
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="copyBoleto"]')) {
+                    e.preventDefault();
+                    // TODO: Implement clipboard API to copy boleto link
+                    alert('Link do boleto copiado para a área de transferência!');
+                } else if (e.target.closest('[data-event*="openBoleto"]')) {
+                    e.preventDefault();
+                    // TODO: Implement external link opening
+                    window.open('#', '_blank');
+                }
+            });
+
+            // Handle form submissions
+            document.addEventListener('submit', function(e) {
+                if (e.target.closest('[data-event*="handleNewVisit"]')) {
+                    e.preventDefault();
+                    // TODO: Implement visit registration logic
+                    alert('Visita registrada com sucesso!');
+                    e.target.reset();
+                }
+            });
+
+            // Handle file upload demo
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-implementation*="file upload"]')) {
+                    const fileInput = e.target.closest('div').querySelector('input[type="file"]');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                }
+            });
+
+            // Initialize app
+            showView('login-screen');
+        })();
+    </script>
+</body>
+</html>
